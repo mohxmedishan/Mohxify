@@ -20,12 +20,15 @@ class MohxifyAccessibilityService : AccessibilityService() {
 
     // Kept only for the immediately-following Backspace on the generated trailing space.
     private var lastReplacement: LastReplacement? = null
+    private data class SuppressedReentry(val windowId: Int, val viewId: String?, val beforeText: String)
+    private var suppressedReentry: SuppressedReentry? = null
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (editing || event == null ||
             event.eventType != AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED) return
         if (!LoadoutStore.enabled(this)) {
             lastReplacement = null
+            suppressedReentry = null
             return
         }
         val node = event.source ?: return
@@ -66,12 +69,17 @@ class MohxifyAccessibilityService : AccessibilityService() {
                             lastReplacement = null
                         }
                     } else {
-                        // End of synonym list: leave the word alone; never wrap into a loop.
+                        // End of synonym list: leave the word alone and suppress an immediate
+                        // re-space so a target that is another rule's source cannot chain.
                         lastReplacement = null
+                        suppressedReentry = SuppressedReentry(
+                            event.windowId, node.viewIdResourceName, current
+                        )
                     }
                 } else {
                     // Any ordinary deletion cancels the replacement marker. Never rescan deletions.
                     lastReplacement = null
+                    suppressedReentry = null
                 }
                 return
             }
@@ -80,7 +88,18 @@ class MohxifyAccessibilityService : AccessibilityService() {
             // selection edits are deliberately ignored.
             if (event.addedCount <= 0 || event.removedCount != 0) {
                 lastReplacement = null
+                suppressedReentry = null
                 return
+            }
+            val suppression = suppressedReentry
+            if (suppression != null) {
+                suppressedReentry = null
+                if (suppression.windowId == event.windowId &&
+                    suppression.viewId == node.viewIdResourceName &&
+                    event.beforeText?.toString() == suppression.beforeText &&
+                    current == suppression.beforeText + " ") {
+                    return
+                }
             }
             lastReplacement = null
             if (current.isEmpty() || !current.last().isWhitespace()) return
@@ -155,6 +174,7 @@ class MohxifyAccessibilityService : AccessibilityService() {
 
     override fun onInterrupt() {
         lastReplacement = null
+        suppressedReentry = null
         expectedReplacementText = null
     }
 }
