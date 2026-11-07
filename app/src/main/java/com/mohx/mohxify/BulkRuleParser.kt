@@ -38,11 +38,14 @@ object BulkRuleParser {
             }
         }
 
+        // Same source + different target is a synonym, not a duplicate.
         val seen = mutableSetOf<String>()
         var duplicates = 0
         val uniqueReversed = mutableListOf<Rule>()
         valid.asReversed().forEach { rule ->
-            if (seen.add(rule.from.lowercase(Locale.ROOT))) uniqueReversed += rule else duplicates++
+            val key = rule.from.lowercase(Locale.ROOT) + "\u0000" +
+                rule.to.lowercase(Locale.ROOT)
+            if (seen.add(key)) uniqueReversed += rule else duplicates++
         }
         return Result(uniqueReversed.asReversed(), duplicates, invalid)
     }
