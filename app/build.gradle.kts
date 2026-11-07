@@ -10,9 +10,11 @@ android {
     signingConfigs {
         create("permanentDebug") {
             storeFile = file("mohxify-debug.keystore")
-            storePassword = "mohxify-debug-store"
+            // Must match generate-keystore.yml exactly.
+            storePassword = "mohxify-debug-password"
             keyAlias = "mohxify"
-            keyPassword = "mohxify-debug-key"
+            keyPassword = "mohxify-debug-password"
+            storeType = "JKS"
         }
     }
 
