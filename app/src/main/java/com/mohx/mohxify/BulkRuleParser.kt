@@ -1,5 +1,7 @@
 package com.mohx.mohxify
 
+import java.util.Locale
+
 /** Pure Kotlin parser: no Android APIs, so it can be exercised by local JVM tests. */
 object BulkRuleParser {
     data class InvalidEntry(val entry: String, val reason: String)
@@ -40,7 +42,7 @@ object BulkRuleParser {
         var duplicates = 0
         val uniqueReversed = mutableListOf<Rule>()
         valid.asReversed().forEach { rule ->
-            if (seen.add(rule.from.lowercase())) uniqueReversed += rule else duplicates++
+            if (seen.add(rule.from.lowercase(Locale.ROOT))) uniqueReversed += rule else duplicates++
         }
         return Result(uniqueReversed.asReversed(), duplicates, invalid)
     }
