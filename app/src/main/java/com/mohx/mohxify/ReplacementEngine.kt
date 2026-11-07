@@ -12,6 +12,7 @@ object ReplacementEngine {
         return matching.map { applyWordCase(word, it) }
     }
 
+    @kotlin.jvm.JvmName("replaceWordFromPairs")
     fun replaceWord(word: String, rules: List<Pair<String, String>>): String {
         val replacement = rules.firstOrNull { it.first.equals(word, ignoreCase = true) }?.second
             ?: return word
