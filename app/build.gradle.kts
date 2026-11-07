@@ -7,12 +7,28 @@ android {
     namespace = "com.mohx.mohxify"
     compileSdk = 35
 
+    signingConfigs {
+        create("permanentDebug") {
+            storeFile = file("mohxify-debug.keystore")
+            storePassword = "mohxify-debug-store"
+            keyAlias = "mohxify"
+            keyPassword = "mohxify-debug-key"
+        }
+    }
+
     defaultConfig {
         applicationId = "com.mohx.mohxify"
         minSdk = 26
         targetSdk = 29
-        versionCode = 1
-        versionName = "1.0"
+        val runNumber = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
+        versionCode = runNumber
+        versionName = "1.$runNumber"
+    }
+
+    buildTypes {
+        getByName("debug") {
+            signingConfig = signingConfigs.getByName("permanentDebug")
+        }
     }
 
     compileOptions {
