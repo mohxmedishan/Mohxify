@@ -1,1 +1,4 @@
-
+<resources>
+    <string name="app_name">Mohxify</string>
+    <string name="accessibility_description">Replaces completed words using your local Mohxify dictionary. Text is processed on-device.</string>
+</resources>
