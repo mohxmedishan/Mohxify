@@ -23,6 +23,10 @@ class MainActivity : Activity() {
     private lateinit var list: LinearLayout
     private lateinit var renameButton: Button
     private lateinit var deleteButton: Button
+    private lateinit var replacementCount: TextView
+    private lateinit var showMoreButton: Button
+    private var visibleRuleCount = 10
+    private var displayedLoadoutId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -119,8 +123,16 @@ class MainActivity : Activity() {
             setTextColor(0xFF454B52.toInt())
             setPadding(0, dp(18), 0, dp(8))
         })
+        replacementCount = TextView(this).apply {
+            textSize = 12f
+            setTextColor(0xFF687078.toInt())
+            setPadding(dp(2), 0, 0, dp(6))
+        }
+        content.addView(replacementCount)
         list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         content.addView(list)
+        showMoreButton = button("SHOW MORE") { }
+        content.addView(showMoreButton)
 
         content.addView(button("COPY LOADOUT RULES") {
             copy(BulkRuleParser.export(LoadoutStore.active(this).rules))
@@ -184,6 +196,8 @@ class MainActivity : Activity() {
                 val chosen = items.getOrNull(position) ?: return
                 if (chosen.id != LoadoutStore.active(this@MainActivity).id) {
                     LoadoutStore.setActive(this@MainActivity, chosen.id)
+                    visibleRuleCount = 10
+                    displayedLoadoutId = chosen.id
                     refresh()
                 }
             }
@@ -191,8 +205,19 @@ class MainActivity : Activity() {
         deleteButton.isEnabled = items.size > 1
         deleteButton.alpha = if (items.size > 1) 1f else 0.45f
 
+        if (displayedLoadoutId != active.id) {
+            displayedLoadoutId = active.id
+            visibleRuleCount = 10
+        }
+        val totalRules = active.rules.size
+        val shownRules = minOf(visibleRuleCount, totalRules)
+        replacementCount.text = "Showing " + shownRules + " of " + totalRules + " replacements"
+        showMoreButton.visibility = if (totalRules > 10) View.VISIBLE else View.GONE
+        showMoreButton.text = if (shownRules < totalRules) {
+            "SHOW MORE (" + (totalRules - shownRules) + " remaining)"
+        } else "SHOW LESS"
         list.removeAllViews()
-        active.rules.forEach { rule ->
+        active.rules.take(shownRules).forEach { rule ->
             val row = LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
@@ -220,6 +245,12 @@ class MainActivity : Activity() {
             list.addView(row, LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
             ).apply { bottomMargin = dp(7) })
+        }
+        showMoreButton.setOnClickListener {
+            visibleRuleCount = if (visibleRuleCount < totalRules) {
+                minOf(visibleRuleCount + 10, totalRules)
+            } else 10
+            refresh()
         }
         if (active.rules.isEmpty()) list.addView(TextView(this).apply {
             text = "No replacements yet. Add one or import a list."
