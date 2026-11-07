@@ -14,20 +14,8 @@ object LoadoutStore {
     private const val KEY_ENABLED = "enabled"
     private const val LEGACY_KEY_RULES = "rules"
 
-    fun defaults(): List<Loadout> = listOf(
-        Loadout("shortcuts", "Shortcuts", listOf(
-            Rule("what", "wt"), Rule("just", "js"),
-            Rule("about", "abt"), Rule("because", "bcs")
-        )),
-        Loadout("shakespeare", "Shakespeare", listOf(
-            Rule("you", "thou"), Rule("your", "thy"), Rule("are", "art"),
-            Rule("yes", "aye"), Rule("no", "nay"), Rule("hello", "hark"),
-            Rule("friend", "companion"), Rule("why", "wherefore"),
-            Rule("where", "whither"), Rule("before", "ere"),
-            Rule("goodbye", "farewell"), Rule("love", "adore"),
-            Rule("my", "mine"), Rule("is", "doth"), Rule("the", "ye")
-        ))
-    )
+    // A new installation starts with one empty loadout. No example rules are inserted.
+    fun defaults(): List<Loadout> = listOf(Loadout("loadout-1", "Loadout 1", emptyList()))
 
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -38,6 +26,28 @@ object LoadoutStore {
         if (p.contains(KEY_LOADOUTS)) {
             val parsed = decode(p.getString(KEY_LOADOUTS, null))
             if (parsed.isNotEmpty()) {
+                // Remove only the untouched sample loadouts from the previous app version.
+                // Any user-edited or user-created data is preserved.
+                val oldDefaults = listOf(
+                    Loadout("shortcuts", "Shortcuts", listOf(
+                        Rule("what", "wt"), Rule("just", "js"),
+                        Rule("about", "abt"), Rule("because", "bcs")
+                    )),
+                    Loadout("shakespeare", "Shakespeare", listOf(
+                        Rule("you", "thou"), Rule("your", "thy"), Rule("are", "art"),
+                        Rule("yes", "aye"), Rule("no", "nay"), Rule("hello", "hark"),
+                        Rule("friend", "companion"), Rule("why", "wherefore"),
+                        Rule("where", "whither"), Rule("before", "ere"),
+                        Rule("goodbye", "farewell"), Rule("love", "adore"),
+                        Rule("my", "mine"), Rule("is", "doth"), Rule("the", "ye")
+                    ))
+                )
+                if (parsed == oldDefaults) {
+                    val clean = defaults()
+                    p.edit().putString(KEY_LOADOUTS, encode(clean))
+                        .putString(KEY_ACTIVE, clean.first().id).apply()
+                    return
+                }
                 if (parsed.none { it.id == p.getString(KEY_ACTIVE, null) }) {
                     p.edit().putString(KEY_ACTIVE, parsed.first().id).apply()
                 }
@@ -45,15 +55,12 @@ object LoadoutStore {
             }
         }
 
-        // One-time migration: preserve the old "rules" preference in Shortcuts.
+        // Preserve any pre-loadout rules from older Mohxify versions.
         val legacy = p.getString(LEGACY_KEY_RULES, null)
-        val initial = defaults().toMutableList()
-        if (legacy != null) {
-            val migrated = decodeRules(legacy)
-            if (migrated.isNotEmpty()) {
-                initial[0] = initial[0].copy(rules = migrated)
-            }
-        }
+        val migratedRules = decodeRules(legacy)
+        val initial = listOf(Loadout(
+            "loadout-1", "Loadout 1", migratedRules
+        ))
         p.edit()
             .putString(KEY_LOADOUTS, encode(initial))
             .putString(KEY_ACTIVE, initial.first().id)
