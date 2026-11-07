@@ -17,8 +17,7 @@ class MainActivity : Activity() {
     private lateinit var status: TextView
     private lateinit var activeLabel: TextView
     private lateinit var list: LinearLayout
-    private lateinit var loadoutSpinner: Spinner
-    private var renderingSpinner = false
+    private lateinit var loadoutChoices: RadioGroup
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,19 +53,8 @@ class MainActivity : Activity() {
             setTextColor(0xFF222222.toInt()); setPadding(0, dp(6), 0, dp(4))
         }
         root.addView(activeLabel)
-        loadoutSpinner = Spinner(this)
-        root.addView(loadoutSpinner, matchWidth())
-        loadoutSpinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
-            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
-            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
-                if (renderingSpinner) return
-                val items = LoadoutStore.all(this@MainActivity)
-                if (position in items.indices && items[position].id != LoadoutStore.active(this@MainActivity).id) {
-                    LoadoutStore.setActive(this@MainActivity, items[position].id)
-                    refresh()
-                }
-            }
-        }
+        loadoutChoices = RadioGroup(this).apply { orientation = RadioGroup.VERTICAL }
+        root.addView(loadoutChoices, matchWidth())
         root.addView(button("Enable / disable Mohxify") {
             LoadoutStore.setEnabled(this, !LoadoutStore.enabled(this)); refresh()
         })
@@ -154,10 +142,18 @@ class MainActivity : Activity() {
         val active = LoadoutStore.active(this)
         status.text = "Status: " + if (LoadoutStore.enabled(this)) "ON" else "OFF"
         activeLabel.text = "Active loadout: " + active.name
-        renderingSpinner = true
-        loadoutSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, items.map { it.name })
-        loadoutSpinner.setSelection(items.indexOfFirst { it.id == active.id }.coerceAtLeast(0), false)
-        renderingSpinner = false
+        loadoutChoices.removeAllViews()
+        items.forEach { item ->
+            val choice = RadioButton(this).apply {
+                text = item.name
+                isChecked = item.id == active.id
+                setOnClickListener {
+                    LoadoutStore.setActive(this@MainActivity, item.id)
+                    refresh()
+                }
+            }
+            loadoutChoices.addView(choice)
+        }
         list.removeAllViews()
         active.rules.forEach { rule ->
             val row = LinearLayout(this).apply {
