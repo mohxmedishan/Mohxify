@@ -36,19 +36,22 @@ jobs:
             -alias mohxify
       - name: Build debug APK
         run: gradle assembleDebug --stacktrace
-      - name: Rename APK
-        run: mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/mohxify.apk
+      - name: Rename APK with version
+        run: |
+          VERSION="1.${GITHUB_RUN_NUMBER}"
+          mv app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/mohxify-${VERSION}.apk"
+          echo "APK_VERSION=${VERSION}" >> "$GITHUB_ENV"
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Mohxify
-          path: app/build/outputs/apk/debug/mohxify.apk
+          name: Mohxify-${{ env.APK_VERSION }}
+          path: app/build/outputs/apk/debug/mohxify-${{ env.APK_VERSION }}.apk
           if-no-files-found: error
           retention-days: 30
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
-          name: Mohxify 1.${{ github.run_number }}
-          files: app/build/outputs/apk/debug/mohxify.apk
+          name: Mohxify ${{ env.APK_VERSION }}
+          files: app/build/outputs/apk/debug/mohxify-${{ env.APK_VERSION }}.apk
           generate_release_notes: true
