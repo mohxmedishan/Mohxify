@@ -32,6 +32,11 @@ class MainActivity : Activity() {
     private var renderedLoadoutId: String? = null
     private var renderedRules: List<Rule>? = null
     private var renderedRuleCount = -1
+    private var importTextField: EditText? = null
+    companion object {
+        private const val REQUEST_OPEN_RULES = 4101
+        private const val REQUEST_SAVE_LOADOUT = 4102
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -144,6 +149,7 @@ class MainActivity : Activity() {
             setPadding(dp(8), dp(4), dp(8), dp(4))
         })
 
+        content.addView(button("Download loadout") { downloadActiveLoadout() })
         scroll.addView(content)
         page.addView(scroll, LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f
@@ -406,7 +412,14 @@ class MainActivity : Activity() {
             minLines = 5
             gravity = Gravity.TOP
         }
-        val scroll = ScrollView(this).apply { addView(input) }
+        importTextField = input
+        val importLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(16), dp(4), dp(16), 0)
+            addView(input)
+            addView(button("Open .txt file") { openRulesFile() })
+        }
+        val scroll = ScrollView(this).apply { addView(importLayout) }
         val dialog = AlertDialog.Builder(this).setTitle("Add by rules")
             .setView(scroll).setNegativeButton("Cancel", null).setPositiveButton("Preview", null).create()
         dialog.setOnShowListener {
@@ -417,6 +430,51 @@ class MainActivity : Activity() {
             }
         }
         dialog.show()
+    }
+
+    private fun openRulesFile() {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "text/plain"
+            putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("text/plain", "text/*"))
+        }
+        startActivityForResult(intent, REQUEST_OPEN_RULES)
+    }
+
+    private fun downloadActiveLoadout() {
+        val loadout = LoadoutStore.active(this)
+        val safeName = loadout.name.replace(Regex("[^A-Za-z0-9._-]+"), "_").ifBlank { "Loadout" }
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TITLE, safeName + ".txt")
+        }
+        startActivityForResult(intent, REQUEST_SAVE_LOADOUT)
+    }
+
+    @Deprecated("Deprecated in Android")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode != RESULT_OK) return
+        val uri = data?.data ?: return
+        when (requestCode) {
+            REQUEST_OPEN_RULES -> try {
+                val text = contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+                    ?: throw IllegalStateException("Unable to open selected file")
+                importTextField?.setText(text)
+                toast("Text file loaded. Tap Preview to review its rules.")
+            } catch (_: Exception) {
+                toast("Could not read selected file")
+            }
+            REQUEST_SAVE_LOADOUT -> try {
+                contentResolver.openOutputStream(uri)?.bufferedWriter()?.use {
+                    it.write(BulkRuleParser.export(LoadoutStore.active(this).rules))
+                } ?: throw IllegalStateException("Unable to create selected file")
+                toast("Loadout downloaded")
+            } catch (_: Exception) {
+                toast("Could not save loadout file")
+            }
+        }
     }
 
     private fun showImportPreview(parsed: BulkRuleParser.Result) {
