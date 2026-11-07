@@ -251,7 +251,9 @@ class MainActivity : Activity() {
 
     private fun createLoadout() {
         val items = LoadoutStore.all(this)
-        val name = "Loadout ${items.size + 1}"
+        val nextNumber = (items.mapNotNull { Regex("^Loadout ([0-9]+)$", RegexOption.IGNORE_CASE)
+            .matchEntire(it.name)?.groupValues?.get(1)?.toIntOrNull() }.maxOrNull() ?: 1) + 1
+        val name = "Loadout $nextNumber"
         val created = Loadout(LoadoutStore.newId(), name, emptyList())
         LoadoutStore.save(this, items + created, created.id)
         refresh()
