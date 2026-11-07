@@ -11,15 +11,17 @@ class MohxifyTileService : TileService() {
 
     override fun onClick() {
         super.onClick()
-        Rules.setEnabled(this, !Rules.enabled(this))
+        LoadoutStore.setEnabled(this, !LoadoutStore.enabled(this))
         updateTile()
     }
 
     private fun updateTile() {
         qsTile?.let {
-            val active = Rules.enabled(this)
+            val active = LoadoutStore.enabled(this)
+            val name = LoadoutStore.active(this).name
             it.state = if (active) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
-            it.label = if (active) "Mohxify ON" else "Mohxify OFF"
+            it.label = name.take(20)
+            it.contentDescription = "Mohxify ${if (active) "ON" else "OFF"} · $name"
             it.updateTile()
         }
     }
