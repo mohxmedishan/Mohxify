@@ -2,8 +2,6 @@ package com.mohx.mohxify
 
 import android.content.Context
 
-data class Rule(val from: String, val to: String)
-
 /** Compatibility facade retained for existing app components. */
 object Rules {
     fun defaults() = LoadoutStore.defaults().first().rules
