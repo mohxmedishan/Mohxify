@@ -26,8 +26,14 @@ jobs:
           SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
           yes | "$SDKM" --licenses > /dev/null || true
           "$SDKM" "platforms;android-35" "build-tools;35.0.0"
-      - name: Verify permanent signing key exists
-        run: test -f app/mohxify-debug.keystore
+      - name: Verify permanent signing key and credentials
+        run: |
+          test -s app/mohxify-debug.keystore
+          keytool -list -v \
+            -storetype JKS \
+            -keystore app/mohxify-debug.keystore \
+            -storepass mohxify-debug-password \
+            -alias mohxify
       - name: Build debug APK
         run: gradle assembleDebug --stacktrace
       - name: Rename APK
