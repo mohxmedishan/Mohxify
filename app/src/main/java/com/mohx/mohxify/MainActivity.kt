@@ -7,6 +7,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
@@ -49,7 +50,7 @@ class MainActivity : Activity() {
         val page = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(18), dp(20), dp(18), dp(16))
-            setBackgroundColor(0xFFF7F8FA.toInt())
+            setBackgroundColor(0xFFF3F5F9.toInt())
         }
         val scroll = ScrollView(this).apply { clipToPadding = false }
         val content = LinearLayout(this).apply {
@@ -155,8 +156,9 @@ class MainActivity : Activity() {
         text = label
         textSize = 14f
         isAllCaps = false
-        setTextColor(0xFF20262C.toInt())
-        setBackgroundColor(0xFFE2E6E9.toInt())
+        setTextColor(0xFF243247.toInt())
+        background = rounded(0xFFE7ECF4.toInt(), 14)
+        minHeight = dp(48)
         setOnClickListener { action() }
     }
 
@@ -166,8 +168,13 @@ class MainActivity : Activity() {
         isAllCaps = false
         minWidth = dp(42)
         setTextColor(0xFF263238.toInt())
-        setBackgroundColor(0xFFE2E6E9.toInt())
+        background = rounded(0xFFE7ECF4.toInt(), 14)
         setOnClickListener { action() }
+    }
+
+    private fun rounded(color: Int, radius: Int) = GradientDrawable().apply {
+        setColor(color)
+        cornerRadius = dp(radius).toFloat()
     }
 
     private fun iconParams() = LinearLayout.LayoutParams(dp(46), dp(50)).apply {
@@ -229,7 +236,8 @@ class MainActivity : Activity() {
                         orientation = LinearLayout.HORIZONTAL
                         gravity = Gravity.CENTER_VERTICAL
                         setPadding(dp(12), dp(5), dp(4), dp(5))
-                        setBackgroundColor(0xFFFFFFFF.toInt())
+                        background = rounded(0xFFFFFFFF.toInt(), 14)
+                        elevation = dp(1).toFloat()
                     }
                     row.addView(LinearLayout(this).apply {
                         orientation = LinearLayout.VERTICAL
