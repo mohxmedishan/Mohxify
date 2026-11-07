@@ -221,34 +221,47 @@ class MainActivity : Activity() {
             renderedRules != active.rules || renderedRuleCount != shownRules
         if (rulesNeedRendering) {
             list.removeAllViews()
-            active.rules.take(shownRules).forEach { rule ->
-            val row = LinearLayout(this).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.CENTER_VERTICAL
-                setPadding(dp(10), dp(2), dp(2), dp(2))
-                setBackgroundColor(0xFFFFFFFF.toInt())
-            }
-            row.addView(TextView(this).apply {
-                text = rule.from + "  →  " + rule.to
-                textSize = 15f
-                setTextColor(0xFF20252A.toInt())
-                setPadding(0, dp(8), 0, dp(8))
-            }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-            row.addView(compactButton("✎") { showRuleDialog(rule) })
-            row.addView(compactButton("×") {
-                AlertDialog.Builder(this)
-                    .setMessage("Delete the rule “${rule.from} → ${rule.to}”?")
-                    .setNegativeButton("Cancel", null)
-                    .setPositiveButton("Delete") { _, _ ->
-                        val current = LoadoutStore.active(this).rules
-                        LoadoutStore.updateRules(this, current.filterNot { it == rule })
-                        refresh()
-                    }.show()
-            })
-            list.addView(row, LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply { bottomMargin = dp(7) })
-        }
+            active.rules.take(shownRules)
+                .groupBy { it.from.lowercase(java.util.Locale.ROOT) }
+                .values.forEach { synonyms ->
+                    val first = synonyms.first()
+                    val row = LinearLayout(this).apply {
+                        orientation = LinearLayout.HORIZONTAL
+                        gravity = Gravity.CENTER_VERTICAL
+                        setPadding(dp(12), dp(5), dp(4), dp(5))
+                        setBackgroundColor(0xFFFFFFFF.toInt())
+                    }
+                    row.addView(LinearLayout(this).apply {
+                        orientation = LinearLayout.VERTICAL
+                        addView(TextView(this@MainActivity).apply {
+                            text = first.from
+                            textSize = 15f
+                            typeface = Typeface.DEFAULT_BOLD
+                            setTextColor(0xFF20252A.toInt())
+                        })
+                        addView(TextView(this@MainActivity).apply {
+                            text = synonyms.joinToString("  ·  ") { it.to }
+                            textSize = 13f
+                            setTextColor(0xFF687078.toInt())
+                        })
+                    }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+                    row.addView(compactButton("✎") { showRuleDialog(first) })
+                    row.addView(compactButton("×") {
+                        AlertDialog.Builder(this)
+                            .setMessage("Delete “${first.from}” and all its synonyms?")
+                            .setNegativeButton("Cancel", null)
+                            .setPositiveButton("Delete") { _, _ ->
+                                val current = LoadoutStore.active(this).rules
+                                LoadoutStore.updateRules(this, current.filterNot {
+                                    it.from.equals(first.from, true)
+                                })
+                                refresh()
+                            }.show()
+                    })
+                    list.addView(row, LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+                    ).apply { bottomMargin = dp(7) })
+                }
             if (active.rules.isEmpty()) list.addView(TextView(this).apply {
                 text = "No replacements yet. Add one or import a list."
                 textSize = 14f
@@ -337,8 +350,15 @@ class MainActivity : Activity() {
         val from = EditText(this).apply {
             hint = "Original word"; setSingleLine(true); setText(existing?.from ?: "")
         }
+        val existingTargets = existing?.let { selected ->
+            LoadoutStore.active(this).rules.filter { it.from.equals(selected.from, true) }
+                .joinToString("\\n") { it.to }
+        }.orEmpty()
         val to = EditText(this).apply {
-            hint = "Replacement"; setSingleLine(true); setText(existing?.to ?: "")
+            hint = "Replacement (one per line for synonyms)"
+            minLines = 2
+            gravity = Gravity.TOP
+            setText(existingTargets)
         }
         layout.addView(from); layout.addView(to)
         val dialog = AlertDialog.Builder(this)
@@ -347,19 +367,22 @@ class MainActivity : Activity() {
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val original = from.text.toString().trim()
-                val replacement = to.text.toString().trim()
+                val replacements = to.text.toString().split(Regex("[,;\\n]+"))
+                    .map { it.trim() }.filter { it.isNotEmpty() }.distinctBy {
+                        it.lowercase(java.util.Locale.ROOT)
+                    }
                 val rules = LoadoutStore.active(this).rules
                 when {
-                    original.isEmpty() || replacement.isEmpty() -> toast("Enter both words first")
+                    original.isEmpty() || replacements.isEmpty() -> toast("Enter an original and at least one replacement")
                     original.any { it.isWhitespace() } -> toast("Original must be a single word")
-                    original.equals(replacement, true) -> toast("Those words are identical")
+                    replacements.any { it.equals(original, true) } -> toast("A word cannot replace itself")
                     rules.any { it.from.equals(original, true) &&
                         (existing == null || !it.from.equals(existing.from, true)) } ->
-                        toast("That original word already has a rule")
+                        toast("That original word already has rules")
                     else -> {
-                        LoadoutStore.updateRules(this, rules.filterNot {
-                            existing != null && it.from.equals(existing.from, true)
-                        } + Rule(original, replacement))
+                        val retained = rules.filterNot { it.from.equals(original, true) }
+                        LoadoutStore.updateRules(this, retained + replacements.map { Rule(original, it) })
+                        renderedRules = null
                         refresh()
                         dialog.dismiss()
                     }
@@ -404,11 +427,14 @@ class MainActivity : Activity() {
             }
             .setPositiveButton("Add / update rules") { _, _ ->
                 val merged = LoadoutStore.active(this).rules.toMutableList()
-                parsed.rules.forEach { incoming ->
-                    val index = merged.indexOfFirst { it.from.equals(incoming.from, true) }
-                    if (index >= 0) merged[index] = incoming else merged.add(incoming)
-                }
+                parsed.rules.groupBy { it.from.lowercase(java.util.Locale.ROOT) }
+                    .values.forEach { incomingGroup ->
+                        val source = incomingGroup.first().from
+                        merged.removeAll { it.from.equals(source, true) }
+                        merged.addAll(incomingGroup)
+                    }
                 LoadoutStore.updateRules(this, merged)
+                renderedRules = null
                 refresh()
                 toast("Rules added")
             }.show()
