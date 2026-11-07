@@ -360,7 +360,7 @@ class MainActivity : Activity() {
         }
         val existingTargets = existing?.let { selected ->
             LoadoutStore.active(this).rules.filter { it.from.equals(selected.from, true) }
-                .joinToString("\\n") { it.to }
+                .joinToString("\n") { it.to }
         }.orEmpty()
         val to = EditText(this).apply {
             hint = "Replacement (one per line for synonyms)"
