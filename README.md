@@ -1,53 +1,48 @@
 # Mohxify
 
-A small Android 8+ prototype that attempts custom autocorrect-style word replacement while keeping the user's existing keyboard (including Gboard).
+Mohxify is a local Android text-replacement tool for Android 8+ that works alongside your existing keyboard.
 
-## Current behaviour
+## Features
 
-- Watches accessibility `TYPE_VIEW_TEXT_CHANGED` events.
-- When an editable field ends in whitespace, it checks the word immediately before the final whitespace.
-- Replaces exact dictionary matches, preserving simple ALL-CAPS and Title Case.
-- Stores the dictionary and enabled state locally in app preferences.
-- Includes a Quick Settings tile for a fast ON/OFF switch.
+- Accessibility-based replacement after a completed word and whitespace.
+- Password fields are skipped.
+- Punctuation around words is preserved; apostrophes inside words remain part of the word.
+- ALL CAPS and Title Case are preserved.
+- Named rule loadouts, one active at a time, with Shortcuts and Shakespeare defaults.
+- Import rules from pasted text, preview changes, and merge or replace.
+- Export/import all loadouts as a JSON backup, and copy the current loadout as text.
+- Global ON/OFF switch and Quick Settings tile.
+- No INTERNET permission. Check for updates opens the public GitHub Releases page.
 
-Default rules:
-- what -> wt
-- just -> js
-- about -> abt
-- because -> bcs
+## Build with GitHub Actions (phone-friendly)
 
-## Important limitations
+You do not need Android Studio or a local terminal.
 
-This is a prototype, not a universal Android input method. Android accessibility APIs do not guarantee that every app exposes editable text or accepts `ACTION_SET_TEXT`. Some apps, secure fields, custom editors, and certain keyboard/input combinations may not work. Replacing the entire field text can also be rejected by an app or disturb cursor behaviour. Test in a harmless Notes field first.
+1. Open the repository's Actions tab.
+2. Run Generate permanent Mohxify debug keystore once using Run workflow.
+3. Open that completed run, find Artifacts, and download mohxify-debug-keystore.
+4. Extract the downloaded ZIP on your phone. It contains mohxify-debug.keystore.
+5. In the repository, choose Add file → Upload files, upload that file into the app/ folder (the final path must be app/mohxify-debug.keystore), and commit to main.
+6. Each push to main builds mohxify.apk, uploads it as the Mohxify Actions artifact, and publishes it in a GitHub Release.
+7. Download the latest APK from the repository's Releases page.
 
-The accessibility service can read text in editable fields while enabled. This app does not request internet permission and the code does not transmit text, but review the source and only enable accessibility for software you trust. Do not enable it in password or other sensitive fields.
+The release page is public because this repository is public; a GitHub account sign-in is not required to download its release assets.
 
-## Validation performed
+## Signing-key transition warning
 
-- The pure Kotlin replacement engine was compiled with `kotlinc`.
-- Eight logic checks passed: the four default mappings, ALL-CAPS, Title Case, unchanged unrelated words, and a non-matching longer word.
-- The Android app itself has not been built or run: this environment has no Android SDK or Gradle installation.
+**The first APK signed with the new permanent keystore cannot update an APK signed with the old random GitHub Actions debug keystore.** Back up your loadouts, uninstall the old Mohxify once, install the new APK, and restore your backup if needed. After this one-time transition, future APKs use the same committed signing key and install over the top without removing app data.
 
-## Build
+The committed debug key is intentionally a personal-app signing key, not a production publishing key. Do not reuse it for unrelated apps.
 
-Requirements: Android Studio with Android SDK 35 and JDK 17.
-
-1. Open this folder in Android Studio.
-2. Let Gradle sync.
-3. Build > Build Bundle(s) / APK(s) > Build APK(s).
-4. Install the generated debug APK on the phone.
-
-The project intentionally targets Android 10 compatibility (minSdk 26, targetSdk 29).
-
-## Enable
+## Enable accessibility
 
 1. Open Mohxify.
-2. Tap **Enable accessibility service**.
-3. In Android Accessibility settings, enable **Mohxify text replacement**.
+2. Tap Enable accessibility service.
+3. Enable Mohxify text replacement in Android Accessibility settings.
 4. Return to Mohxify.
-5. Pull down Quick Settings, edit the tiles, and add **Mohxify**.
-6. Test `what ` in a normal Notes text field.
+5. Add the Mohxify Quick Settings tile if desired.
+6. Test in a harmless Notes field.
 
-## Privacy
+## Compatibility and privacy
 
-No INTERNET permission is declared. The service processes text locally. Accessibility access is powerful: it can potentially observe text in editable fields in apps where Android exposes it. Disable the service whenever you do not need it.
+The project targets minSdk 26 and targetSdk 29. Android accessibility does not guarantee that every app exposes editable text or accepts ACTION_SET_TEXT; custom editors may behave differently. Accessibility access is powerful, so enable the service only if you trust the app. Text processing and rule storage happen on-device.
