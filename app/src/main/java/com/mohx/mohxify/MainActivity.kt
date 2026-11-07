@@ -25,8 +25,12 @@ class MainActivity : Activity() {
     private lateinit var deleteButton: Button
     private lateinit var replacementCount: TextView
     private lateinit var showMoreButton: Button
+    private lateinit var masterToggle: Button
     private var visibleRuleCount = 10
     private var displayedLoadoutId: String? = null
+    private var renderedLoadoutId: String? = null
+    private var renderedRules: List<Rule>? = null
+    private var renderedRuleCount = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,8 +48,8 @@ class MainActivity : Activity() {
     private fun render() {
         val page = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(18), dp(22), dp(18), dp(18))
-            setBackgroundColor(0xFFF4F5F7.toInt())
+            setPadding(dp(18), dp(20), dp(18), dp(16))
+            setBackgroundColor(0xFFF7F8FA.toInt())
         }
         val scroll = ScrollView(this).apply { clipToPadding = false }
         val content = LinearLayout(this).apply {
@@ -54,13 +58,13 @@ class MainActivity : Activity() {
         }
 
         content.addView(TextView(this).apply {
-            text = "MOHXIFY"
-            textSize = 29f
+            text = "Mohxify"
+            textSize = 27f
             setTextColor(0xFF17191C.toInt())
             typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
         })
         content.addView(TextView(this).apply {
-            text = "Your words. Your autocorrect."
+            text = "Personal text replacements"
             textSize = 15f
             setTextColor(0xFF687078.toInt())
             setPadding(0, 0, 0, dp(12))
@@ -73,18 +77,16 @@ class MainActivity : Activity() {
         }
         content.addView(status)
 
-        content.addView(button("Turn Mohxify OFF") {
+        masterToggle = button("Turn Mohxify on") {
             LoadoutStore.setEnabled(this, !LoadoutStore.enabled(this))
             refresh()
-        }.also { toggle ->
-            toggle.tag = "master_toggle"
-            toggle.text = "ENABLE / DISABLE MOHXIFY"
-        })
+        }
+        content.addView(masterToggle)
 
         serviceButton = button("Enable accessibility service") {
             startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
         }
-        serviceButton.text = "ENABLE ACCESSIBILITY SERVICE"
+        serviceButton.text = "Enable accessibility service"
         content.addView(serviceButton)
 
         val selectorRow = LinearLayout(this).apply {
@@ -117,7 +119,7 @@ class MainActivity : Activity() {
         content.addView(actionRow)
 
         content.addView(TextView(this).apply {
-            text = "REPLACEMENTS"
+            text = "Replacements"
             textSize = 13f
             typeface = Typeface.DEFAULT_BOLD
             setTextColor(0xFF454B52.toInt())
@@ -131,10 +133,10 @@ class MainActivity : Activity() {
         content.addView(replacementCount)
         list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         content.addView(list)
-        showMoreButton = button("SHOW MORE") { }
+        showMoreButton = button("Show more") { }
         content.addView(showMoreButton)
 
-        content.addView(button("COPY LOADOUT RULES") {
+        content.addView(button("Copy loadout rules") {
             copy(BulkRuleParser.export(LoadoutStore.active(this).rules))
             toast("Loadout rules copied")
         }.apply {
@@ -179,8 +181,7 @@ class MainActivity : Activity() {
         val enabled = LoadoutStore.enabled(this)
         status.text = "Status: " + if (enabled) "ON" else "OFF"
 
-        val toggle = findToggleButton()
-        toggle?.text = if (enabled) "TURN MOHXIFY OFF" else "TURN MOHXIFY ON"
+        masterToggle.text = if (enabled) "Turn Mohxify off" else "Turn Mohxify on"
 
         val accessibilityEnabled = isMohxifyAccessibilityEnabled()
         serviceButton.visibility = if (accessibilityEnabled) View.GONE else View.VISIBLE
@@ -211,23 +212,25 @@ class MainActivity : Activity() {
         }
         val totalRules = active.rules.size
         val shownRules = minOf(visibleRuleCount, totalRules)
-        replacementCount.text = "Showing " + shownRules + " of " + totalRules + " replacements"
+        replacementCount.text = "$shownRules of $totalRules replacements"
         showMoreButton.visibility = if (totalRules > 10) View.VISIBLE else View.GONE
         showMoreButton.text = if (shownRules < totalRules) {
-            "SHOW MORE (" + (totalRules - shownRules) + " remaining)"
-        } else "SHOW LESS"
-        list.removeAllViews()
-        active.rules.take(shownRules).forEach { rule ->
+            "Show 10 more (${totalRules - shownRules} left)"
+        } else "Show fewer"
+        val rulesNeedRendering = renderedLoadoutId != active.id ||
+            renderedRules != active.rules || renderedRuleCount != shownRules
+        if (rulesNeedRendering) {
+            list.removeAllViews()
+            active.rules.take(shownRules).forEach { rule ->
             val row = LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
-                setPadding(dp(12), dp(4), dp(5), dp(4))
+                setPadding(dp(10), dp(2), dp(2), dp(2))
                 setBackgroundColor(0xFFFFFFFF.toInt())
-                elevation = dp(1).toFloat()
             }
             row.addView(TextView(this).apply {
-                text = rule.from + "   →   " + rule.to
-                textSize = 16f
+                text = rule.from + "  →  " + rule.to
+                textSize = 15f
                 setTextColor(0xFF20252A.toInt())
                 setPadding(0, dp(8), 0, dp(8))
             }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
@@ -246,30 +249,22 @@ class MainActivity : Activity() {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
             ).apply { bottomMargin = dp(7) })
         }
+            if (active.rules.isEmpty()) list.addView(TextView(this).apply {
+                text = "No replacements yet. Add one or import a list."
+                textSize = 14f
+                setTextColor(0xFF687078.toInt())
+                setPadding(dp(12), dp(18), dp(12), dp(18))
+            })
+            renderedLoadoutId = active.id
+            renderedRules = active.rules.toList()
+            renderedRuleCount = shownRules
+        }
         showMoreButton.setOnClickListener {
             visibleRuleCount = if (visibleRuleCount < totalRules) {
                 minOf(visibleRuleCount + 10, totalRules)
             } else 10
             refresh()
         }
-        if (active.rules.isEmpty()) list.addView(TextView(this).apply {
-            text = "No replacements yet. Add one or import a list."
-            textSize = 14f
-            setTextColor(0xFF687078.toInt())
-            setPadding(dp(12), dp(18), dp(12), dp(18))
-        })
-    }
-
-    private fun findToggleButton(): Button? {
-        fun search(view: View): Button? {
-            if (view is Button && view.tag == "master_toggle") return view
-            if (view is ViewGroup) for (i in 0 until view.childCount) {
-                val found = search(view.getChildAt(i))
-                if (found != null) return found
-            }
-            return null
-        }
-        return search(window.decorView)
     }
 
     private fun isMohxifyAccessibilityEnabled(): Boolean {
