@@ -93,7 +93,7 @@ class MohxifyKeyboardService : InputMethodService() {
         list.tag = "command_list"
         root.addView(ScrollView(this).apply {
             isFillViewport = false
-            addView(list, ScrollView.LayoutParams(-1, -2))
+            addView(list, android.widget.FrameLayout.LayoutParams(-1, -2))
         }, LinearLayout.LayoutParams(-1, 0, 1f))
         renderActions(list)
 
