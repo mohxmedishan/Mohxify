@@ -87,7 +87,7 @@ setAsset("download-android","android-version",apk,"Android APK");
 if(desktopResponse.ok){const desktop=await desktopResponse.json(),assets=desktop.assets||[];
 setAsset("download-windows","windows-version",assets.find(a=>/\.exe$/i.test(a.name)),"Windows .exe");
 setAsset("download-macos","macos-version",assets.find(a=>/\.dmg$/i.test(a.name)),"macOS .dmg");
-setAsset("download-chromeos","chromeos-version",assets.find(a=>/\.deb$/i.test(a.name)),"ChromeOS Linux .deb");
+setAsset("download-chromeos","chromeos-version",assets.find(a=>/_arm64\.deb$/i.test(a.name)),"ChromeOS Linux .deb");
 }else{for(const [id,versionId,desc] of [["download-windows","windows-version","Windows .exe"],["download-macos","macos-version","macOS .dmg"],["download-chromeos","chromeos-version","ChromeOS Linux .deb"]])setAsset(id,versionId,null,desc);}
 }catch(error){document.getElementById("download-error").style.display="block";}}
 loadDownloads();
