@@ -39,7 +39,7 @@ android {
         getByName("debug") {
             signingConfig = signingConfigs.getByName("permanentDebug")
         }
-        create("release") {
+        getByName("release") {
             isMinifyEnabled = false
             signingConfig = signingConfigs.getByName("privateRelease")
         }
