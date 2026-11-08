@@ -4,7 +4,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller
-import android.os.Build
 import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
@@ -66,12 +65,21 @@ object UpdateManager {
             throw IllegalStateException("The release APK is missing its SHA-256 checksum")
         }
 
+        val downloadUrl = asset.optString("browser_download_url")
+        val sha256 = digest.substringAfter(":").lowercase()
+        if (!downloadUrl.startsWith("https://github.com/mohxmedishan/Mohxify/releases/download/")) {
+            throw SecurityException("The release APK URL is not an official Mohxify release")
+        }
+        if (!sha256.matches(Regex("[0-9a-f]{64}"))) {
+            throw IllegalStateException("The release APK checksum is invalid")
+        }
+
         return Release(
             version = latestVersion,
             title = release.optString("name", "Mohxify $latestVersion"),
             notes = release.optString("body").take(1800),
-            downloadUrl = asset.optString("browser_download_url"),
-            sha256 = digest.substringAfter(":").lowercase()
+            downloadUrl = downloadUrl,
+            sha256 = sha256
         )
     }
 
