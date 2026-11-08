@@ -129,7 +129,7 @@ class MainActivity : Activity() {
             setTextColor(0xFFFFFFFF.toInt()); setPadding(0, dp(9), 0, dp(7))
         })
         hero.addView(TextView(this).apply {
-            text = "Fast shortcuts, personal dictionaries, zero keyboard switching."
+            text = "Personal text rules and a dedicated command pad."
             textSize = 13f; setTextColor(0xFFC6BED7.toInt())
         })
         status = TextView(this).apply {
