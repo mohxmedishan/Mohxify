@@ -85,9 +85,15 @@ class MohxifyAccessibilityService : AccessibilityService() {
                 return
             }
 
-            // Only genuine insertions can trigger a replacement. Rewrites, deletions and
-            // selection edits are deliberately ignored.
-            if (event.addedCount <= 0 || event.removedCount != 0) {
+            // Gboard and other IMEs do not report addedCount/removedCount consistently:
+            // a committed word + space can arrive with removedCount > 0 or addedCount == 0.
+            // Detect the meaningful transition instead: the field has just gained a trailing
+            // separator, while the previous text did not already end in whitespace.
+            val previousEndedWithWhitespace = previous?.lastOrNull()?.isWhitespace() == true
+            val separatorJustCommitted = current.lastOrNull()?.isWhitespace() == true &&
+                !previousEndedWithWhitespace &&
+                (previous != null || event.addedCount > 0)
+            if (!separatorJustCommitted) {
                 lastReplacement = null
                 suppressedReentry = null
                 return
