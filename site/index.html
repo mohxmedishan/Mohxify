@@ -3,122 +3,109 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#090b12">
-  <meta name="description" content="Mohxify is a privacy-first Android text replacement toolkit. Build personal dictionaries, switch writing styles, and type the way you want.">
-  <title>Mohxify — Your words, your rules.</title>
+  <meta name="theme-color" content="#080510">
+  <meta name="description" content="Mohxify turns your shortcuts into the words, phrases, and writing styles you actually use.">
+  <title>Mohxify — Transform Your Text. Your Way.</title>
+  <link rel="icon" type="image/svg+xml" href="assets/mohxify-mark.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Relief:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    :root{color-scheme:dark;--bg:#090b12;--panel:#111522;--muted:#a5adc0;--text:#f5f7ff;--line:rgba(255,255,255,.1);--a:#a58aff;--b:#69ddce;--glow:rgba(139,112,255,.2)}
-    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(ellipse at 50% -12%,var(--glow),transparent 44%),var(--bg);color:var(--text);font:16px/1.65 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-    a{color:inherit;text-decoration:none}.wrap{width:min(1080px,calc(100% - 40px));margin:auto}
-    nav{height:76px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}
-    .brand{display:flex;align-items:center;gap:11px;font-weight:850;font-size:20px;letter-spacing:-.6px}.logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--a),#5d8cff 58%,var(--b));display:grid;place-items:center;color:#080a12;font-weight:950;font-size:21px;box-shadow:0 7px 28px #8065ff44}
-    .navlinks{display:flex;gap:24px;align-items:center}.navlink{color:var(--muted);font-size:14px}.navlink:hover{color:white}
-    .hero{text-align:center;padding:94px 0 82px}.eyebrow{display:inline-flex;gap:8px;align-items:center;padding:7px 12px;border:1px solid #9b7bff55;background:#9b7bff12;border-radius:99px;color:#c7b8ff;font-size:12px;font-weight:750;letter-spacing:.08em;text-transform:uppercase}
-    h1{font-size:clamp(48px,8vw,86px);line-height:1.01;letter-spacing:-.068em;margin:25px 0 20px}.gradient{background:linear-gradient(100deg,#c4b5ff 5%,#83aaff 52%,#69e4d1 95%);-webkit-background-clip:text;background-clip:text;color:transparent}
-    .lead{max-width:660px;margin:0 auto;color:var(--muted);font-size:clamp(16px,2.2vw,19px)}
-    .download-card{max-width:560px;margin:38px auto 0;padding:23px;background:linear-gradient(145deg,rgba(27,31,49,.98),rgba(16,20,32,.98));border:1px solid var(--line);border-radius:22px;box-shadow:0 22px 80px #0008;text-align:left}
-    .release-top{display:flex;justify-content:space-between;gap:12px;align-items:center}.release-label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-weight:750}.status{font-size:11px;color:#75e3c8;background:#75e3c817;border:1px solid #75e3c833;padding:5px 9px;border-radius:99px;white-space:nowrap}
-    .version{font-size:28px;font-weight:850;letter-spacing:-.045em;margin:7px 0 0}.meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin:8px 0 19px}
-    .btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:15px 18px;border-radius:13px;background:linear-gradient(100deg,#b39aff,#83aaff 65%,#72e2d2);color:#090b12;font-weight:900;font-size:16px;box-shadow:0 9px 30px #8c75ff30;transition:transform .18s,filter .18s}.btn:hover{transform:translateY(-2px);filter:brightness(1.08)}.btn:focus-visible,a:focus-visible{outline:3px solid white;outline-offset:3px}
-    .subnote{text-align:center;color:var(--muted);font-size:11px;margin:12px 0 0}.error{color:#ffaaa9;font-size:13px;margin:12px 0 0;display:none}.release-link{display:block;text-align:center;color:#c5b8ff;font-size:13px;margin-top:14px}
-    .section{padding:72px 0;border-top:1px solid var(--line)}.section-heading{text-align:center;max-width:680px;margin:0 auto 34px}.kicker{color:#b9a8ff;text-transform:uppercase;letter-spacing:.12em;font-size:11px;font-weight:800}.section h2{font-size:clamp(28px,4vw,40px);letter-spacing:-.05em;line-height:1.1;margin:9px 0 12px}.section-heading p{color:var(--muted);margin:0}
-    .features{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.feature{padding:23px;border:1px solid var(--line);background:linear-gradient(145deg,#ffffff08,#ffffff03);border-radius:17px}.feature-icon{font-size:23px}.feature h3{margin:12px 0 5px;font-size:16px}.feature p{margin:0;color:var(--muted);font-size:13px}
-    .privacy{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:center}.privacy-panel{padding:25px;border:1px solid #69ddce33;background:linear-gradient(145deg,#69ddce0c,#9b7bff0b);border-radius:18px}.privacy-panel h3{margin:0 0 8px}.privacy-panel p{margin:0;color:var(--muted);font-size:14px}.privacy-list{display:grid;gap:12px}.privacy-item{display:flex;gap:12px;align-items:flex-start;color:var(--muted);font-size:14px}.check{color:#79e2ca;font-weight:900}
-    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.step{text-align:center;color:var(--muted);font-size:13px}.num{margin:0 auto 12px;width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:#9b7bff20;color:#c8baff;font-weight:850}
-    .faq{max-width:760px;margin:auto;display:grid;gap:10px}.faq details{padding:17px 19px;border:1px solid var(--line);border-radius:14px;background:#ffffff05}.faq summary{cursor:pointer;font-weight:700}.faq p{color:var(--muted);font-size:14px;margin:10px 0 0}
-    footer{border-top:1px solid var(--line);padding:24px 0;color:var(--muted);font-size:12px}.foot{display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap}
-    @media(max-width:700px){.hero{padding:68px 0 58px}.features,.steps,.privacy{grid-template-columns:1fr}.section{padding:54px 0}.step{display:flex;text-align:left;align-items:center;gap:12px}.num{flex:none;margin:0}.download-card{padding:18px}.foot{justify-content:center;text-align:center}.navlinks{gap:14px}.navlink{font-size:12px}}
+    :root{color-scheme:dark;--bg:#080510;--panel:#10091d;--panel2:#160b2b;--text:#fffaff;--muted:#c4b8d5;--purple:#a100ff;--pink:#d64bff;--line:#7822c9;--glow:#8100ff66}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(ellipse at 50% -20%,#5600a866,transparent 48%),radial-gradient(ellipse at 100% 65%,#39007855,transparent 35%),var(--bg);color:var(--text);font:16px/1.6 "Comic Relief",ui-rounded,system-ui,sans-serif}
+    a{color:inherit;text-decoration:none}.wrap{width:min(1480px,calc(100% - 38px));margin:auto}
+    nav{min-height:94px;display:flex;align-items:center;justify-content:space-between;gap:20px;border-bottom:1px solid #7617b9;padding:12px 24px}
+    .brand{display:flex;align-items:center;gap:12px;font-size:clamp(22px,3vw,34px);font-weight:700;letter-spacing:-1.5px;text-shadow:3px 4px 0 #29004b}
+    .brand img{width:54px;height:54px;filter:drop-shadow(0 0 13px #a100ff)}
+    .navlinks{display:flex;gap:clamp(12px,3vw,42px);align-items:center;font-weight:700}.navlink{color:#f4eaff}.navlink:hover{color:#df83ff}
+    .nav-cta,.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(110deg,#7800ff,#bd28ff);border:1px solid #d46aff;border-radius:999px;padding:13px 24px;font-weight:700;box-shadow:0 0 25px #8900ff77;transition:transform .18s,filter .18s}.nav-cta:hover,.btn:hover{transform:translateY(-2px);filter:brightness(1.12)}
+    .hero{display:grid;grid-template-columns:1.05fr .95fr;align-items:center;gap:30px;min-height:620px;padding:68px 5.5%;position:relative;overflow:hidden}
+    .hero:before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(135deg,transparent 48%,#4d00a322 49%,transparent 70%)}
+    .hero-copy,.hero-art{position:relative;z-index:1}.eyebrow{display:inline-flex;align-items:center;gap:9px;color:#e8aaff;font-weight:700;font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+    h1{font-size:clamp(44px,6.5vw,88px);line-height:1.06;letter-spacing:-.055em;margin:20px 0 18px;text-shadow:4px 5px 0 #250044}
+    .gradient{color:#d45aff;text-shadow:4px 5px 0 #3d0067}.lead{max-width:610px;color:#e1d5ee;font-size:clamp(16px,1.6vw,20px)}
+    .hero-actions{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:30px}.btn{font-size:17px;padding:16px 28px}.secondary{color:#d8b9ff;font-weight:700}.hero-art{display:grid;place-items:center;min-height:420px}
+    .orb{width:min(100%,520px);aspect-ratio:1;position:relative;display:grid;place-items:center;border-radius:50%;background:radial-gradient(circle,#a100ff30 0,transparent 66%);filter:drop-shadow(0 0 30px #7900ff88)}
+    .orb img{width:90%;height:90%;object-fit:contain}.spark{position:absolute;color:#df60ff;font-size:40px;text-shadow:0 0 18px #b000ff}.s1{top:9%;left:8%}.s2{right:5%;top:30%}.s3{bottom:8%;left:18%}
+    .feature-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1px solid #6813aa;border-bottom:1px solid #6813aa;background:#10071d;padding:22px 5%}.strip-item{display:flex;align-items:center;justify-content:center;gap:12px;padding:8px 10px;font-weight:700}.strip-icon{font-size:26px;color:#c94bff}
+    .section{padding:82px 5%;border-top:1px solid #491078}.section-heading{text-align:center;max-width:760px;margin:0 auto 38px}.kicker{color:#d36aff;text-transform:uppercase;letter-spacing:.14em;font-size:12px;font-weight:700}.section h2{font-size:clamp(30px,4vw,48px);line-height:1.12;margin:10px 0}.section-heading p{color:var(--muted);margin:0}
+    .features{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.feature{padding:25px;border:1px solid #6420a1;background:linear-gradient(145deg,#1c0c31,#0d0718);border-radius:20px;box-shadow:0 12px 35px #0005}.feature-icon{font-size:30px}.feature h3{margin:12px 0 6px;font-size:19px}.feature p{margin:0;color:var(--muted);font-size:14px}
+    .download-panel{max-width:760px;margin:auto;padding:30px;border:1px solid #9b36df;border-radius:24px;background:linear-gradient(145deg,#1d0c35,#0c0716);box-shadow:0 0 50px #6900a633;text-align:center}.release-label{color:#d6b5ee;font-size:12px;text-transform:uppercase;letter-spacing:.12em}.version{font-size:30px;font-weight:700;margin:8px 0}.meta{color:var(--muted);font-size:13px;margin-bottom:20px}.download-panel .btn{width:100%;max-width:420px}.error{display:none;color:#ffaaa9;font-size:13px}.release-link{display:block;color:#d6a0ff;margin-top:15px;font-size:13px}
+    .privacy{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:center}.privacy-panel{padding:28px;border:1px solid #63229a;background:#130a20;border-radius:20px}.privacy-panel p{color:var(--muted);margin:0}
+    footer{border-top:1px solid #491078;padding:25px 0;color:var(--muted);font-size:13px}.foot{display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap}
+    @media(max-width:800px){nav{padding:12px 4px}.navlinks{gap:12px}.navlink{font-size:12px}.nav-cta{padding:10px 14px;font-size:12px}.hero{grid-template-columns:1fr;text-align:center;padding:58px 4% 40px;gap:0}.hero-copy{display:flex;align-items:center;flex-direction:column}.hero-art{min-height:280px}.orb{width:min(80vw,380px)}.feature-strip{grid-template-columns:repeat(2,1fr)}.features,.privacy{grid-template-columns:1fr}.section{padding:60px 4%}}
+    @media(max-width:480px){.wrap{width:calc(100% - 20px)}nav{flex-wrap:wrap}.brand img{width:42px;height:42px}.navlinks{order:3;width:100%;justify-content:center;padding:7px 0}.nav-cta{margin-left:auto}.hero{padding-top:42px}.hero h1{font-size:clamp(42px,12vw,60px)}.feature-strip{padding:14px 2%}.strip-item{font-size:13px;justify-content:flex-start}.download-panel{padding:22px 15px}.foot{justify-content:center;text-align:center}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important}}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <nav>
-      <a class="brand" href="#"><span class="logo">M</span><span>mohxify</span></a>
-      <div class="navlinks"><a class="navlink" href="#features">Features</a><a class="navlink" href="#privacy">Privacy</a><a class="navlink" href="https://github.com/mohxmedishan/Mohxify" target="_blank" rel="noopener">GitHub ↗</a></div>
-    </nav>
-    <main>
-      <section class="hero">
-        <div class="eyebrow"><span>✦</span> Your words. Your rules.</div>
-        <h1>Type less.<br><span class="gradient">Sound like you.</span></h1>
-        <p class="lead">Turn shortcuts into the words, phrases, and styles you actually use. Build your own dictionaries, switch between writing modes, and keep your typing workflow yours.</p>
-        <div class="download-card">
-          <div class="release-top"><span class="release-label">Latest Android release</span><span class="status">● GitHub release</span></div>
-          <div class="version" id="version">Finding the latest version…</div>
-          <div class="meta"><span id="date">Checking GitHub Releases</span><span id="size"></span></div>
-          <a class="btn" id="download" href="https://github.com/mohxmedishan/Mohxify/releases/latest" aria-label="Download the latest Mohxify APK">↓ <span>Download latest APK</span></a>
-          <p class="subnote">Android APK · Free download · Direct release asset</p>
-          <p class="error" id="error" role="status">Couldn't load release details. You can still open the latest release on GitHub.</p>
-          <a class="release-link" id="release" href="https://github.com/mohxmedishan/Mohxify/releases/latest" target="_blank" rel="noopener">View release notes ↗</a>
-        </div>
-      </section>
-
-      <section class="section" id="features">
-        <div class="section-heading"><span class="kicker">Built around your language</span><h2>A small shortcut can do a lot.</h2><p>Keep everyday typing fast, or create entirely different vocabularies for different moods and contexts.</p></div>
-        <div class="features">
-          <article class="feature"><span class="feature-icon">⚡</span><h3>Instant expansions</h3><p>Turn short triggers into words and phrases as you type, without switching keyboards.</p></article>
-          <article class="feature"><span class="feature-icon">📚</span><h3>Separate loadouts</h3><p>Keep work, casual, Shakespeare, pirate, gaming, and custom dictionaries organized independently.</p></article>
-          <article class="feature"><span class="feature-icon">🔁</span><h3>Synonym alternatives</h3><p>Give a trigger multiple possible replacements and cycle through the alternatives.</p></article>
-          <article class="feature"><span class="feature-icon">🧩</span><h3>Bulk import</h3><p>Bring in rule lists, preview valid and invalid entries, then merge or replace a loadout.</p></article>
-          <article class="feature"><span class="feature-icon">📦</span><h3>Portable dictionaries</h3><p>Copy or download a loadout as text and back up your collection as JSON.</p></article>
-          <article class="feature"><span class="feature-icon">🎚️</span><h3>Quick control</h3><p>Pause or resume replacement from the app or your Android Quick Settings tile.</p></article>
-        </div>
-      </section>
-
-      <section class="section" id="privacy">
-        <div class="privacy">
-          <div><span class="kicker">Private by design</span><h2>Your dictionary belongs to you.</h2><p style="color:var(--muted)">Mohxify is designed to process replacements on your device. It does not need an account or an internet connection for its core text-replacement features.</p></div>
-          <div class="privacy-panel"><h3>What to know about Accessibility</h3><p>Mohxify uses Android Accessibility to detect completed words in editable fields and request replacements. That permission is powerful, so only enable the service if you trust the app. Password fields are skipped. Some apps use custom editors that may not support replacement.</p></div>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="section-heading"><span class="kicker">Get started</span><h2>Up and running in three steps.</h2></div>
-        <div class="steps"><div class="step"><span class="num">1</span><span>Download the latest APK from this page.</span></div><div class="step"><span class="num">2</span><span>Install it and follow the in-app Accessibility setup.</span></div><div class="step"><span class="num">3</span><span>Create a loadout, add a rule, and test it in a notes app.</span></div></div>
-      </section>
-
-      <section class="section">
-        <div class="section-heading"><span class="kicker">Good to know</span><h2>Quick answers.</h2></div>
-        <div class="faq">
-          <details><summary>Does Mohxify replace my keyboard?</summary><p>No. It is designed to work alongside your existing keyboard using Android's accessibility text-editing actions.</p></details>
-          <details><summary>Does it send what I type to a server?</summary><p>The current app does not request the INTERNET permission. Replacement rules and processing stay on-device.</p></details>
-          <details><summary>Will it work in every app?</summary><p>Not necessarily. Apps can use custom text editors or restrict accessibility text actions. Test it in a notes field first.</p></details>
-          <details><summary>Can I back up my dictionaries?</summary><p>Yes. Download individual loadouts as text files, or export all loadouts and the active selection as one JSON backup. Restore asks for confirmation before replacing your current loadouts.</p></details>
-        </div>
-      </section>
-    </main>
-    <footer><div class="foot"><span>© <span id="year"></span> Mohxify</span><span>Your words. Your rules.</span><a href="https://github.com/mohxmedishan/Mohxify" target="_blank" rel="noopener">Source code on GitHub ↗</a></div></footer>
-  </div>
-  <script>
-    const API = "https://api.github.com/repos/mohxmedishan/Mohxify/releases/latest";
-    const fallback = "https://github.com/mohxmedishan/Mohxify/releases/latest";
-    document.getElementById("year").textContent = new Date().getFullYear();
-    const formatSize = bytes => bytes < 1048576 ? (bytes/1024).toFixed(0)+" KB" : (bytes/1048576).toFixed(2)+" MB";
-    async function loadLatestRelease(){
-      const version = document.getElementById("version");
-      const download = document.getElementById("download");
-      try {
-        const response = await fetch(API, {headers:{Accept:"application/vnd.github+json"}, cache:"no-store"});
-        if(!response.ok) throw new Error("GitHub API returned "+response.status);
-        const release = await response.json();
-        const apk = (release.assets || [])
-          .filter(asset => /^mohxify.*\.apk$/i.test(asset.name))
-          .sort((a,b) => b.name.localeCompare(a.name, undefined, {numeric:true}))[0];
-        if(!apk) throw new Error("No versioned Mohxify APK asset in latest release");
-        version.textContent = release.name || release.tag_name || apk.name;
-        const published = release.published_at || release.created_at;
-        document.getElementById("date").textContent = published ? "Updated "+new Date(published).toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"}) : "Latest published build";
-        document.getElementById("size").textContent = formatSize(apk.size);
-        download.href = apk.browser_download_url;
-        download.querySelector("span").textContent = "Download " + apk.name;
-        download.setAttribute("aria-label", "Download " + apk.name);
-        document.getElementById("release").href = release.html_url || fallback;
-      } catch(error) {
-        version.textContent = "Latest APK on GitHub";
-        document.getElementById("error").style.display = "block";
-        download.href = fallback;
-      }
-    }
-    loadLatestRelease();
-  </script>
+<div class="wrap">
+  <nav>
+    <a class="brand" href="#"><img src="assets/mohxify-mark.svg" alt=""><span>Mohxify</span></a>
+    <div class="navlinks"><a class="navlink" href="#features">Features</a><a class="navlink" href="#privacy">Privacy</a><a class="navlink" href="https://github.com/mohxmedishan/Mohxify" target="_blank" rel="noopener">GitHub ↗</a></div>
+    <a class="nav-cta" href="#download">↓ Get Mohxify</a>
+  </nav>
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow">✦ Your words. Your rules.</div>
+        <h1>Transform Your Text.<br><span class="gradient">Your Way.</span></h1>
+        <p class="lead">Mohxify is your personal text transformation toolkit. Expand shortcuts, switch writing styles, and make every word sound the way you want.</p>
+        <div class="hero-actions"><a class="btn" href="#download">↓ Download Mohxify</a><a class="secondary" href="#features">Explore features ↗</a></div>
+      </div>
+      <div class="hero-art" aria-hidden="true"><div class="orb"><span class="spark s1">✦</span><span class="spark s2">✧</span><span class="spark s3">✦</span><img src="assets/mohxify-mark.svg" alt=""></div></div>
+    </section>
+    <div class="feature-strip"><div class="strip-item"><span class="strip-icon">⚡</span> Powerful replacements</div><div class="strip-item"><span class="strip-icon">🎨</span> Custom loadouts</div><div class="strip-item"><span class="strip-icon">✦</span> Lightning fast</div><div class="strip-item"><span class="strip-icon">🧩</span> Endless possibilities</div></div>
+    <section class="section" id="features">
+      <div class="section-heading"><span class="kicker">Built around your language</span><h2>A little shortcut. A whole new voice.</h2><p>Keep everyday typing fast, or create entirely different vocabularies for different moods and contexts.</p></div>
+      <div class="features">
+        <article class="feature"><span class="feature-icon">⚡</span><h3>Instant expansions</h3><p>Turn short triggers into words and phrases as you type, without switching keyboards.</p></article>
+        <article class="feature"><span class="feature-icon">📚</span><h3>Separate loadouts</h3><p>Keep work, casual, Shakespeare, pirate, gaming, and custom dictionaries organized independently.</p></article>
+        <article class="feature"><span class="feature-icon">🔁</span><h3>Synonym alternatives</h3><p>Give a trigger multiple possible replacements and cycle through the alternatives.</p></article>
+        <article class="feature"><span class="feature-icon">🧩</span><h3>Bulk import</h3><p>Preview valid and invalid rules, then merge or replace a loadout.</p></article>
+        <article class="feature"><span class="feature-icon">📦</span><h3>Portable dictionaries</h3><p>Copy or download loadouts as text and back up your collection as JSON.</p></article>
+        <article class="feature"><span class="feature-icon">🎚️</span><h3>Quick control</h3><p>Pause or resume replacement from the app or Android Quick Settings tile.</p></article>
+      </div>
+    </section>
+    <section class="section" id="download">
+      <div class="section-heading"><span class="kicker">Ready when you are</span><h2>Get Mohxify.</h2><p>Download the latest Android build and start building your own vocabulary.</p></div>
+      <div class="download-panel">
+        <div class="release-label">Latest Android release</div><div class="version" id="version">Finding the latest version…</div>
+        <div class="meta"><span id="date">Checking GitHub Releases</span> · <span id="size"></span></div>
+        <a class="btn" id="download-button" href="https://github.com/mohxmedishan/Mohxify/releases/latest" aria-label="Download the latest Mohxify APK">↓ <span>Download latest APK</span></a>
+        <p class="error" id="error" role="status">Couldn't load release details. You can still open the latest release on GitHub.</p>
+        <a class="release-link" id="release" href="https://github.com/mohxmedishan/Mohxify/releases/latest" target="_blank" rel="noopener">View release notes ↗</a>
+      </div>
+    </section>
+    <section class="section" id="privacy">
+      <div class="privacy"><div><span class="kicker">Private by design</span><h2>Your dictionary belongs to you.</h2><p style="color:var(--muted)">Mohxify is designed to process replacements on your device. Its core text-replacement features do not need an account or an internet connection.</p></div>
+      <div class="privacy-panel"><h3>Accessibility, explained</h3><p>Mohxify uses Android Accessibility to detect completed words in editable fields and request replacements. Password fields are skipped. Some apps use custom editors that may not support replacement.</p></div></div>
+    </section>
+  </main>
+  <footer><div class="foot"><span>© <span id="year"></span> Mohxify</span><span>Your words. Your rules.</span><a href="https://github.com/mohxmedishan/Mohxify" target="_blank" rel="noopener">Source code on GitHub ↗</a></div></footer>
+</div>
+<script>
+  const API="https://api.github.com/repos/mohxmedishan/Mohxify/releases/latest";
+  const fallback="https://github.com/mohxmedishan/Mohxify/releases/latest";
+  document.getElementById("year").textContent=new Date().getFullYear();
+  const formatSize=bytes=>bytes<1048576?(bytes/1024).toFixed(0)+" KB":(bytes/1048576).toFixed(2)+" MB";
+  async function loadLatestRelease(){
+    const version=document.getElementById("version"),download=document.getElementById("download-button");
+    try{
+      const response=await fetch(API,{headers:{Accept:"application/vnd.github+json"},cache:"no-store"});
+      if(!response.ok)throw new Error("GitHub API returned "+response.status);
+      const release=await response.json();
+      const apk=(release.assets||[]).filter(asset=>/^mohxify.*\.apk$/i.test(asset.name)).sort((a,b)=>b.name.localeCompare(a.name,undefined,{numeric:true}))[0];
+      if(!apk)throw new Error("No versioned Mohxify APK asset in latest release");
+      version.textContent=release.name||release.tag_name||apk.name;
+      const published=release.published_at||release.created_at;
+      document.getElementById("date").textContent=published?"Updated "+new Date(published).toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"}):"Latest published build";
+      document.getElementById("size").textContent=formatSize(apk.size);
+      download.href=apk.browser_download_url;download.querySelector("span").textContent="Download "+apk.name;download.setAttribute("aria-label","Download "+apk.name);
+      document.getElementById("release").href=release.html_url||fallback;
+    }catch(error){version.textContent="Latest APK on GitHub";document.getElementById("error").style.display="block";download.href=fallback;}
+  }
+  loadLatestRelease();
+</script>
 </body>
 </html>
