@@ -16,7 +16,7 @@ Requirements: Node.js 22, Rust stable, and the platform prerequisites documented
     npm install
     npm run tauri -- build
 
-The app icon is generated from the checked-in source asset automatically before dev and release builds. Build native installers on their respective operating systems. Windows produces an NSIS .exe installer and macOS produces a .dmg. The GitHub Actions workflow builds both targets independently and uploads the installers as workflow artifacts.
+The app icon is generated from the checked-in source asset automatically before dev and release builds. Build native installers on their respective operating systems. Windows produces an NSIS .exe installer, macOS produces a .dmg, and Linux produces an x86_64 .deb package. The Linux package is intended for Debian-based environments, including the Linux development environment on supported Chromebooks. The GitHub Actions workflow builds all three desktop targets, then publishes the individual installer files to the `desktop-latest` GitHub prerelease so the website can link directly to each file instead of asking visitors to download an artifact ZIP. Android APK releases remain published separately.
 
 ## Current desktop functionality
 
@@ -31,6 +31,6 @@ The app icon is generated from the checked-in source asset automatically before 
 
 ## Platform parity notes
 
-Android's Accessibility Service is platform-specific and is not reused by this desktop target. This first desktop implementation provides an in-app transformation workspace. System-wide replacement in arbitrary Windows/macOS applications requires separate native integrations and explicit OS permissions; it is not silently enabled. The Android app, its accessibility behavior, and its release pipeline are untouched.
+Android's Accessibility Service is platform-specific and is not reused by this desktop target. This first desktop implementation provides an in-app transformation workspace. System-wide replacement in arbitrary Windows/macOS/Linux applications requires separate native integrations and explicit OS permissions; it is not silently enabled. The Android app, its accessibility behavior, and its release pipeline are untouched.
 
 A new installation starts with an empty Loadout 1, matching Android. Import existing .txt dictionaries or restore an Android Mohxify JSON backup to bring your rules onto desktop.
