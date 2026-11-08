@@ -113,7 +113,7 @@ class MainActivity : Activity() {
             })
         }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
         brand.addView(TextView(this).apply {
-            text = "2.1"; textSize = 11f; setTextColor(0xFFCDBBFF.toInt())
+            text = "v${currentVersion()}"; textSize = 11f; setTextColor(0xFFCDBBFF.toInt())
             setPadding(dp(10), dp(6), dp(10), dp(6)); background = rounded(0xFF211A35.toInt(), 30)
         })
         content.addView(brand)
