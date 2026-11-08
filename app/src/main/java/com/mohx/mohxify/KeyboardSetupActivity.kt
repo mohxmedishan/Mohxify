@@ -90,7 +90,10 @@ class KeyboardSetupActivity : Activity() {
             text = "Done"
             setOnClickListener { finish() }
         }, LinearLayout.LayoutParams(-1, dp(46)).apply { topMargin = dp(20) })
-        setContentView(root)
+        setContentView(android.widget.ScrollView(this).apply {
+            isFillViewport = true
+            addView(root, ViewGroup.LayoutParams(-1, -2))
+        })
     }
 
     private fun actionButton(textValue: String, action: () -> Unit) = Button(this).apply {
