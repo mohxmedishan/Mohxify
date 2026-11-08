@@ -8,7 +8,6 @@ import android.inputmethodservice.InputMethodService
 import android.net.Uri
 import android.view.Gravity
 import android.view.View
-import android.view.inputmethod.InputConnection
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -164,19 +163,28 @@ class MohxifyKeyboardService : InputMethodService() {
 
     private fun runCommand(action: GifAction) {
         val uri = Uri.parse(action.uri)
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "image/gif"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
         try {
-            val intent = Intent(Intent.ACTION_SEND).apply {
-                type = "image/gif"
-                putExtra(Intent.EXTRA_STREAM, uri)
-                putExtra(Intent.EXTRA_TEXT, action.trigger)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+            if (packageManager.getLaunchIntentForPackage("com.whatsapp") != null) {
+                // This command is designed around the existing WhatsApp GIF workflow.
+                intent.setPackage("com.whatsapp")
+                startActivity(intent)
+            } else {
+                startActivity(Intent.createChooser(intent, "Run Mohxify GIF command")
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             }
-            val whatsapp = packageManager.getLaunchIntentForPackage("com.whatsapp") != null
-            if (whatsapp) intent.setPackage("com.whatsapp")
-            startActivity(Intent.createChooser(intent, "Run Mohxify GIF command")
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         } catch (_: Exception) {
-            Toast.makeText(this, "Couldn't run this command. Re-save the GIF in Mohxify and try again.", Toast.LENGTH_LONG).show()
+            try {
+                intent.setPackage(null)
+                startActivity(Intent.createChooser(intent, "Choose an app for this GIF")
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            } catch (_: Exception) {
+                Toast.makeText(this, "Couldn't run this command. Re-save the GIF in Mohxify and try again.", Toast.LENGTH_LONG).show()
+            }
         }
     }
 
