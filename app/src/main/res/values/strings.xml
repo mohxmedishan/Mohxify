@@ -1,5 +1,5 @@
 <resources>
     <string name="app_name">Mohxify</string>
-    <string name="accessibility_description">Replaces completed words using your local Mohxify dictionary and shows your configured GIF Actions button while WhatsApp is open. Text is processed on-device.</string>
+    <string name="accessibility_description">Replaces completed words using your local Mohxify dictionary. Text is processed on-device.</string>
     <string name="keyboard_subtype_english">English (US)</string>
 </resources>
