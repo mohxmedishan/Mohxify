@@ -120,14 +120,23 @@ class MohxifyKeyboardService : InputMethodService() {
 
     private fun renderActions(list: LinearLayout) {
         list.removeAllViews()
-        val all = GifActionStore.all(this)
-        val filtered = all.filter { query.isBlank() || it.trigger.contains(query.trim(), ignoreCase = true) }
-        if (filtered.isEmpty()) {
+        val activeLoadout = LoadoutStore.active(this)
+        val textRules = activeLoadout.rules.filter {
+            query.isBlank() ||
+                it.from.contains(query.trim(), ignoreCase = true) ||
+                it.to.contains(query.trim(), ignoreCase = true)
+        }
+        val allGifActions = GifActionStore.all(this)
+        val gifActions = allGifActions.filter {
+            query.isBlank() || it.trigger.contains(query.trim(), ignoreCase = true)
+        }
+
+        if (textRules.isEmpty() && gifActions.isEmpty()) {
             list.addView(TextView(this).apply {
-                text = if (all.isEmpty()) {
-                    "No saved commands yet. Open the Mohxify GIF screen to save a GIF with a trigger phrase."
+                text = if (activeLoadout.rules.isEmpty() && allGifActions.isEmpty()) {
+                    "No commands saved yet. Add text rules in your active loadout or GIF actions in the Mohxify GIF screen."
                 } else {
-                    "No trigger matches that search."
+                    "No commands match that search."
                 }
                 textSize = 13f
                 setTextColor(Color.rgb(180, 174, 198))
@@ -135,30 +144,86 @@ class MohxifyKeyboardService : InputMethodService() {
             })
             return
         }
-        filtered.forEach { action ->
-            val card = LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                setPadding(dp(12), dp(10), dp(12), dp(10))
-                background = rounded(Color.rgb(23, 21, 34), 15)
+
+        if (textRules.isNotEmpty()) {
+            addSectionHeader(list, "TEXT COMMANDS", "${activeLoadout.name} · ${textRules.size}")
+            textRules.forEach { rule ->
+                val card = LinearLayout(this).apply {
+                    orientation = LinearLayout.VERTICAL
+                    setPadding(dp(12), dp(10), dp(12), dp(10))
+                    background = rounded(Color.rgb(23, 21, 34), 15)
+                }
+                card.addView(TextView(this).apply {
+                    text = rule.from
+                    textSize = 15f
+                    typeface = Typeface.DEFAULT_BOLD
+                    setTextColor(Color.WHITE)
+                })
+                card.addView(TextView(this).apply {
+                    text = "Replaces with  →  ${rule.to}"
+                    textSize = 12f
+                    setTextColor(Color.rgb(190, 166, 255))
+                    setPadding(0, dp(3), 0, dp(8))
+                })
+                card.addView(commandButton("Insert replacement  →") {
+                    val connection = currentInputConnection
+                    if (connection == null) {
+                        Toast.makeText(this@MohxifyKeyboardService, "Open a text field first.", Toast.LENGTH_SHORT).show()
+                    } else {
+                        connection.commitText(rule.to, 1)
+                    }
+                }, LinearLayout.LayoutParams(-1, dp(40)))
+                list.addView(card, LinearLayout.LayoutParams(-1, -2).apply {
+                    bottomMargin = dp(8)
+                })
             }
-            card.addView(TextView(this).apply {
-                text = action.trigger
-                textSize = 15f
-                typeface = Typeface.DEFAULT_BOLD
-                setTextColor(Color.WHITE)
-            })
-            card.addView(TextView(this).apply {
-                text = "GIF command"
-                textSize = 11f
-                setTextColor(Color.rgb(170, 164, 188))
-                setPadding(0, dp(3), 0, dp(8))
-            })
-            card.addView(commandButton("Run command  →") { runCommand(action) },
-                LinearLayout.LayoutParams(-1, dp(40)))
-            list.addView(card, LinearLayout.LayoutParams(-1, -2).apply {
-                bottomMargin = dp(8)
-            })
         }
+
+        if (gifActions.isNotEmpty()) {
+            addSectionHeader(list, "GIF COMMANDS", "${gifActions.size} saved")
+            gifActions.forEach { action ->
+                val card = LinearLayout(this).apply {
+                    orientation = LinearLayout.VERTICAL
+                    setPadding(dp(12), dp(10), dp(12), dp(10))
+                    background = rounded(Color.rgb(23, 21, 34), 15)
+                }
+                card.addView(TextView(this).apply {
+                    text = action.trigger
+                    textSize = 15f
+                    typeface = Typeface.DEFAULT_BOLD
+                    setTextColor(Color.WHITE)
+                })
+                card.addView(TextView(this).apply {
+                    text = "Saved GIF action"
+                    textSize = 11f
+                    setTextColor(Color.rgb(170, 164, 188))
+                    setPadding(0, dp(3), 0, dp(8))
+                })
+                card.addView(commandButton("Run GIF command  →") { runCommand(action) },
+                    LinearLayout.LayoutParams(-1, dp(40)))
+                list.addView(card, LinearLayout.LayoutParams(-1, -2).apply {
+                    bottomMargin = dp(8)
+                })
+            }
+        }
+    }
+
+    private fun addSectionHeader(list: LinearLayout, title: String, detail: String) {
+        list.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            addView(TextView(this@MohxifyKeyboardService).apply {
+                text = title
+                textSize = 10f
+                typeface = Typeface.DEFAULT_BOLD
+                setTextColor(Color.rgb(190, 166, 255))
+            }, LinearLayout.LayoutParams(0, dp(28), 1f))
+            addView(TextView(this@MohxifyKeyboardService).apply {
+                text = detail
+                textSize = 10f
+                setTextColor(Color.rgb(160, 153, 178))
+            })
+        }, LinearLayout.LayoutParams(-1, dp(30)))
     }
 
     private fun runCommand(action: GifAction) {
