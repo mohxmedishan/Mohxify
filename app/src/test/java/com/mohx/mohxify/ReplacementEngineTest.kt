@@ -25,6 +25,27 @@ class ReplacementEngineTest {
         assertEquals(listOf("hi", "hey"), ReplacementEngine.alternatives("hello", rules))
     }
 
+    @Test fun completedWordSeparatorTriggersOnPlainInsertion() {
+        assertEquals(true, ReplacementEngine.isCompletedWordSeparator("what", "what "))
+    }
+
+    @Test fun completedWordSeparatorTriggersWhenGboardCommitsComposingText() {
+        // Gboard can replace the composing text in the same event that adds the space.
+        assertEquals(true, ReplacementEngine.isCompletedWordSeparator("wha", "what "))
+    }
+
+    @Test fun completedWordSeparatorRejectsAnAlreadyPresentSeparator() {
+        assertEquals(false, ReplacementEngine.isCompletedWordSeparator("what ", "what  "))
+    }
+
+    @Test fun completedWordSeparatorRejectsEditsWithoutTrailingWhitespace() {
+        assertEquals(false, ReplacementEngine.isCompletedWordSeparator("what", "whats"))
+    }
+
+    @Test fun completedWordSeparatorRejectsMissingPreviousText() {
+        assertEquals(false, ReplacementEngine.isCompletedWordSeparator(null, "what "))
+    }
+
     @Test fun unmatchedWordsRemainUnchanged() {
         assertEquals("friend", ReplacementEngine.replaceWord("friend", listOf(Rule("hello", "hi"))))
     }
