@@ -29,6 +29,15 @@ class ReplacementEngineTest {
         assertEquals("friend", ReplacementEngine.replaceWord("friend", listOf(Rule("hello", "hi"))))
     }
 
+    @Test fun tokenReplacementPreservesLeadingAndTrailingPunctuation() {
+        assertEquals("(wt),", ReplacementEngine.replaceTokenPreservingAffixes("(what),", "wt"))
+        assertEquals("\"wt\"!", ReplacementEngine.replaceTokenPreservingAffixes("\"what\"!", "wt"))
+    }
+
+    @Test fun tokenReplacementLeavesPunctuationOnlyTokensAlone() {
+        assertEquals("...", ReplacementEngine.replaceTokenPreservingAffixes("...", "wt"))
+    }
+
     @Test fun pairOverloadRemainsAvailable() {
         assertEquals("hi", ReplacementEngine.replaceWord("hello", listOf("hello" to "hi")))
     }

@@ -22,6 +22,16 @@ object ReplacementEngine {
     fun replaceWord(word: String, rules: List<Rule>): String =
         alternatives(word, rules).firstOrNull() ?: word
 
+    /** Replaces the alphanumeric core while retaining punctuation around it. */
+    fun replaceTokenPreservingAffixes(token: String, replacement: String): String {
+        var start = 0
+        var end = token.length
+        while (start < end && !token[start].isLetterOrDigit()) start++
+        while (end > start && !token[end - 1].isLetterOrDigit()) end--
+        if (start == end) return token
+        return token.substring(0, start) + replacement + token.substring(end)
+    }
+
     private fun applyWordCase(word: String, replacement: String): String {
         val isAllCaps = word.length > 1 && word == word.uppercase(Locale.ROOT)
         val isTitle = word.firstOrNull()?.isUpperCase() == true

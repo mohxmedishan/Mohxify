@@ -8,15 +8,6 @@ android {
     compileSdk = 35
 
     signingConfigs {
-        create("permanentDebug") {
-            storeFile = file("mohxify-debug.keystore")
-            // Temporary compatibility path for existing installs. This public legacy
-            // key must not be used for future public production releases.
-            storePassword = "mohxify-debug-password"
-            keyAlias = "mohxify"
-            keyPassword = "mohxify-debug-password"
-            storeType = "JKS"
-        }
         create("privateRelease") {
             val keyPath = System.getenv("MOHXIFY_KEYSTORE_PATH")
             storeFile = if (keyPath.isNullOrBlank()) file("missing-release-key.jks") else rootProject.file(keyPath)
@@ -32,12 +23,12 @@ android {
         targetSdk = 35
         val runNumber = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
         versionCode = runNumber
-        versionName = "2.0.$runNumber"
+        versionName = "2.1.$runNumber"
     }
 
     buildTypes {
         getByName("debug") {
-            signingConfig = signingConfigs.getByName("permanentDebug")
+            // Use Gradle's local debug identity. Never ship a signing key in source control.
         }
         getByName("release") {
             isMinifyEnabled = false

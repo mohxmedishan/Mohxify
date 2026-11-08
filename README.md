@@ -41,14 +41,14 @@ Accessibility is powerful. Mohxify uses it only to detect completed words in edi
 - Text processing and rule storage happen on-device.
 - Mohxify does not request the INTERNET permission.
 - Password fields are skipped.
-- The app targets Android 8.0 (API 26) and currently targets API 29 for runtime behavior. Raising target SDK requires deliberate compatibility testing of the accessibility workflow and Android edge-to-edge behavior.
+- The app supports Android 8.0 (API 26) and targets API 35. Accessibility behavior can vary between apps and Android versions, so test on the devices and text fields you use.
 - Accessibility-based text editing is not universal; custom editors may behave differently.
 
 ## Signing-key security — action required before a hardened public release
 
-The legacy APK signing keystore is currently committed in this public repository, and its password is present in the build configuration. Treat that signing identity as **publicly exposed**, not as a secure production key. Anyone who obtains it could sign a counterfeit update with the same Android package identity.
+The legacy debug signing keystore was exposed in the repository and must be treated as compromised. It has been removed from the current source tree and is no longer used by CI. Historical commits may still contain it, so never reuse that identity or password. Anyone who obtains it could sign a counterfeit update with the same Android package identity.
 
-A private release signing configuration and a manual release workflow are prepared. Before using them:
+The app's debug build now uses Gradle's local debug signing identity. Public release builds must use the separate private release signing configuration and GitHub Actions secrets. Before publishing a release:
 
 1. Generate a new private JKS release key on a trusted device or computer. Use a strong unique password and keep at least two secure backups.
 2. In GitHub repository Settings → Secrets and variables → Actions, create:
@@ -59,7 +59,7 @@ A private release signing configuration and a manual release workflow are prepar
 3. Run **Build signed Mohxify release** from Actions.
 4. Verify the APK installs and works on your test device before announcing it.
 
-**Important update warning:** an APK signed with the new private key cannot update an installed APK signed with the old public legacy key. Users will need to save each loadout as a text file or export the full JSON backup, uninstall the old app once, install the newly signed APK, and restore their dictionaries. Do not delete the legacy key or publish the rotated APK until you have personally tested this migration and are ready to announce it.
+**Important update warning:** a build signed with Gradle's local debug key or a new private release key cannot update an existing installation signed with the exposed legacy key. Export all loadouts before switching signing identities. Users may need to uninstall the old app once, install the new build, and restore their dictionaries. Test this migration before announcing it.
 
 Never share the new keystore or its passwords in chat, issues, commits, or screenshots.
 

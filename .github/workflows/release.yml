@@ -55,7 +55,7 @@ jobs:
         run: gradle assembleRelease --no-daemon --stacktrace
       - name: Rename APK with version
         run: |
-          VERSION="2.0.$GITHUB_RUN_NUMBER"
+          VERSION="2.1.$GITHUB_RUN_NUMBER"
           mv app/build/outputs/apk/release/app-release.apk "app/build/outputs/apk/release/mohxify-$VERSION.apk"
           echo "APK_VERSION=$VERSION" >> "$GITHUB_ENV"
       - name: Upload release APK

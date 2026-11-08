@@ -115,18 +115,57 @@ object LoadoutStore {
     }
 
     fun importJson(context: Context, raw: String): Boolean {
+        if (raw.isBlank() || raw.length > MAX_BACKUP_CHARS) return false
         return try {
             val root = JSONObject(raw)
+            if (root.optString("format") != BACKUP_FORMAT) return false
+            val activeId = root.opt("activeLoadoutId") as? String ?: return false
             val array = root.optJSONArray("loadouts") ?: return false
-            val imported = decode(array.toString())
-            if (imported.isEmpty()) return false
-            val activeId = root.optString("activeLoadoutId").takeIf { id ->
-                imported.any { it.id == id }
-            } ?: imported.first().id
+            if (array.length() !in 1..MAX_LOADOUTS) return false
+            val ids = mutableSetOf<String>()
+            val names = mutableSetOf<String>()
+            var totalRules = 0
+            val imported = ArrayList<Loadout>(array.length())
+            for (index in 0 until array.length()) {
+                val item = array.optJSONObject(index) ?: return false
+                val id = item.opt("id") as? String ?: return false
+                val name = item.opt("name") as? String ?: return false
+                val rulesArray = item.optJSONArray("rules") ?: return false
+                val cleanId = id.trim()
+                val cleanName = name.trim()
+                if (cleanId.isBlank() || cleanId.length > 128 ||
+                    cleanName.isBlank() || cleanName.length > 60 ||
+                    !ids.add(cleanId) ||
+                    !names.add(cleanName.lowercase(java.util.Locale.ROOT)) ||
+                    rulesArray.length() > MAX_RULES_PER_LOADOUT) return false
+                val rules = ArrayList<Rule>(rulesArray.length())
+                val pairs = mutableSetOf<String>()
+                for (ruleIndex in 0 until rulesArray.length()) {
+                    val rule = rulesArray.optJSONObject(ruleIndex) ?: return false
+                    val from = (rule.opt("from") as? String)?.trim() ?: return false
+                    val to = (rule.opt("to") as? String)?.trim() ?: return false
+                    if (from.isBlank() || from.length > 64 || from.any { it.isWhitespace() } ||
+                        to.isBlank() || to.length > 256 || from.equals(to, ignoreCase = true)) return false
+                    val key = from.lowercase(java.util.Locale.ROOT) + "\u0000" +
+                        to.lowercase(java.util.Locale.ROOT)
+                    if (!pairs.add(key)) return false
+                    rules.add(Rule(from, to))
+                }
+                totalRules += rules.size
+                if (totalRules > MAX_TOTAL_RULES) return false
+                imported.add(Loadout(cleanId, cleanName, rules))
+            }
+            if (activeId !in ids) return false
             save(context, imported, activeId)
             true
         } catch (_: Exception) { false }
     }
+
+    private const val BACKUP_FORMAT = "mohxify-loadouts-v1"
+    private const val MAX_BACKUP_CHARS = 2_000_000
+    private const val MAX_LOADOUTS = 50
+    private const val MAX_RULES_PER_LOADOUT = 10_000
+    private const val MAX_TOTAL_RULES = 20_000
 
     private fun encode(items: List<Loadout>): String {
         val array = JSONArray()

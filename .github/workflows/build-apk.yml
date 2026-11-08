@@ -30,19 +30,13 @@ jobs:
           SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
           yes | "$SDKM" --licenses > /dev/null || true
           "$SDKM" "platforms;android-35" "build-tools;35.0.0"
-      - name: Verify permanent signing key and credentials
-        run: |
-          test -s app/mohxify-debug.keystore
-          keytool -list -v \
-            -storetype JKS \
-            -keystore app/mohxify-debug.keystore \
-            -storepass mohxify-debug-password \
-            -alias mohxify
+      - name: Run unit tests
+        run: gradle testDebugUnitTest --stacktrace
       - name: Build debug APK
         run: gradle assembleDebug --stacktrace
       - name: Rename APK with version
         run: |
-          VERSION="2.0.${GITHUB_RUN_NUMBER}"
+          VERSION="2.1.${GITHUB_RUN_NUMBER}"
           mv app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/mohxify-${VERSION}.apk"
           echo "APK_VERSION=${VERSION}" >> "$GITHUB_ENV"
       - name: Upload APK artifact

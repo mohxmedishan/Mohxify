@@ -62,8 +62,8 @@ class MainActivity : Activity() {
     private fun render() {
         val page = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(18), dp(20), dp(18), dp(16))
-            setBackgroundColor(0xFFF3F5F9.toInt())
+            setPadding(dp(16), dp(18), dp(16), dp(24))
+            setBackgroundColor(0xFF090A12.toInt())
         }
         val scroll = ScrollView(this).apply { clipToPadding = false }
         val content = LinearLayout(this).apply {
@@ -71,134 +71,181 @@ class MainActivity : Activity() {
             setPadding(0, 0, 0, dp(12))
         }
 
-        content.addView(TextView(this).apply {
-            text = "Mohxify"
-            textSize = 27f
-            setTextColor(0xFF17191C.toInt())
-            typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+        val brand = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, dp(2), 0, dp(18))
+        }
+        brand.addView(TextView(this).apply {
+            text = "M"; textSize = 25f; gravity = Gravity.CENTER
+            typeface = Typeface.create("casual", Typeface.BOLD)
+            setTextColor(0xFFFFFFFF.toInt()); background = rounded(0xFF793BFF.toInt(), 17)
+        }, LinearLayout.LayoutParams(dp(48), dp(48)))
+        brand.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL; setPadding(dp(12), 0, 0, 0)
+            addView(TextView(this@MainActivity).apply {
+                text = "Mohxify"; textSize = 25f
+                typeface = Typeface.create("casual", Typeface.BOLD)
+                setTextColor(0xFFF8F5FF.toInt())
+            })
+            addView(TextView(this@MainActivity).apply {
+                text = "YOUR WORDS. YOUR RULES."; textSize = 9f; letterSpacing = .16f
+                setTextColor(0xFFB5A8D8.toInt())
+            })
+        }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        brand.addView(TextView(this).apply {
+            text = "2.1"; textSize = 11f; setTextColor(0xFFCDBBFF.toInt())
+            setPadding(dp(10), dp(6), dp(10), dp(6)); background = rounded(0xFF211A35.toInt(), 30)
         })
-        content.addView(TextView(this).apply {
-            text = "Personal text replacements"
-            textSize = 15f
-            setTextColor(0xFF687078.toInt())
-            setPadding(0, 0, 0, dp(12))
-        })
+        content.addView(brand)
 
+        val hero = panel(0xFF17132A.toInt(), 26)
+        hero.addView(TextView(this).apply {
+            text = "YOUR PERSONAL TEXT TOOLKIT"; textSize = 10f; letterSpacing = .15f
+            typeface = Typeface.DEFAULT_BOLD; setTextColor(0xFFBBA4FF.toInt())
+        })
+        hero.addView(TextView(this).apply {
+            text = "Make every word\nsound like you."; textSize = 29f
+            setLineSpacing(dp(2).toFloat(), 1f); typeface = Typeface.create("sans-serif", Typeface.BOLD)
+            setTextColor(0xFFFFFFFF.toInt()); setPadding(0, dp(9), 0, dp(7))
+        })
+        hero.addView(TextView(this).apply {
+            text = "Fast shortcuts, personal dictionaries, zero keyboard switching."
+            textSize = 13f; setTextColor(0xFFC6BED7.toInt())
+        })
         status = TextView(this).apply {
-            textSize = 15f
-            setTextColor(0xFF343A40.toInt())
-            setPadding(0, dp(5), 0, dp(8))
+            textSize = 12f; typeface = Typeface.DEFAULT_BOLD; setTextColor(0xFFE6D9FF.toInt())
+            setPadding(dp(11), dp(7), dp(11), dp(7)); background = rounded(0xFF30214E.toInt(), 30)
         }
-        content.addView(status)
-
+        val statusRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, dp(15), 0, dp(10))
+            addView(status, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            addView(TextView(this@MainActivity).apply {
+                text = "LOCAL · OFFLINE"; textSize = 9f; letterSpacing = .08f
+                typeface = Typeface.DEFAULT_BOLD; setTextColor(0xFF9D91B9.toInt())
+            })
+        }
+        hero.addView(statusRow)
         masterToggle = button("Turn Mohxify on") {
-            LoadoutStore.setEnabled(this, !LoadoutStore.enabled(this))
-            refresh()
+            LoadoutStore.setEnabled(this, !LoadoutStore.enabled(this)); refresh()
         }
-        content.addView(masterToggle)
-
+        hero.addView(masterToggle, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52)))
         serviceButton = button("Enable accessibility service") {
             startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-        }
-        serviceButton.text = "Enable accessibility service"
-        content.addView(serviceButton)
-        content.addView(TextView(this).apply {
-            text = "Compatibility: Mohxify works best in standard editable text fields. Some apps use custom editors that cannot accept replacements. Password fields are skipped."
-            textSize = 12f
-            setTextColor(0xFF687078.toInt())
-            setPadding(dp(4), dp(7), dp(4), dp(7))
+        }.apply { background = rounded(0xFF2A2440.toInt(), 15); setTextColor(0xFFE7DDFF.toInt()) }
+        hero.addView(serviceButton, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, dp(48)).apply { topMargin = dp(9) })
+        hero.addView(TextView(this).apply {
+            text = "Works in supported editable fields. Password fields are skipped; some apps use custom editors."
+            textSize = 11f; setTextColor(0xFFAAA0C0.toInt()); setPadding(dp(2), dp(12), dp(2), 0)
         })
+        content.addView(hero)
 
-        val selectorRow = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(0, dp(16), 0, dp(8))
-        }
-        loadoutSpinner = Spinner(this).apply {
-            minimumHeight = dp(48)
-            setBackgroundColor(0xFFFFFFFF.toInt())
-        }
-        selectorRow.addView(loadoutSpinner, LinearLayout.LayoutParams(0, dp(50), 1f))
-        renameButton = compactButton("✎") { renameActiveLoadout() }
-        renameButton.contentDescription = "Rename selected loadout"
-        selectorRow.addView(renameButton, iconParams())
-        deleteButton = compactButton("×") { deleteActiveLoadout() }
-        deleteButton.contentDescription = "Delete selected loadout"
-        selectorRow.addView(deleteButton, iconParams())
-        selectorRow.addView(compactButton("⧉") { duplicateActiveLoadout() }, iconParams())
-        selectorRow.addView(compactButton("+") { createLoadout() }, iconParams())
-        content.addView(selectorRow)
+        val loadoutCard = panel()
+        addSectionHeading(loadoutCard, "YOUR WORKSPACES", "Switch your vocabulary")
+        val selector = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+        loadoutSpinner = Spinner(this).apply { minimumHeight = dp(48); background = rounded(0xFF24243A.toInt(), 13) }
+        selector.addView(loadoutSpinner, LinearLayout.LayoutParams(0, dp(50), 1f))
+        renameButton = compactButton("✎") { renameActiveLoadout() }.apply { contentDescription = "Rename selected loadout" }
+        selector.addView(renameButton, iconParams())
+        deleteButton = compactButton("×") { deleteActiveLoadout() }.apply { contentDescription = "Delete selected loadout" }
+        selector.addView(deleteButton, iconParams())
+        selector.addView(compactButton("⧉") { duplicateActiveLoadout() }, iconParams())
+        selector.addView(compactButton("+") { createLoadout() }, iconParams())
+        loadoutCard.addView(selector)
+        content.addView(loadoutCard)
 
-        val actionRow = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-        }
-        actionRow.addView(button("＋ ADD REPLACEMENT") { showRuleDialog(null) },
-            LinearLayout.LayoutParams(0, dp(54), 1f).apply { rightMargin = dp(6) })
-        actionRow.addView(button("ADD BY RULES") { showImportDialog() },
-            LinearLayout.LayoutParams(0, dp(54), 1f).apply { leftMargin = dp(6) })
-        content.addView(actionRow)
-
-        content.addView(TextView(this).apply {
-            text = "Replacements"
-            textSize = 13f
-            typeface = Typeface.DEFAULT_BOLD
-            setTextColor(0xFF454B52.toInt())
-            setPadding(0, dp(18), 0, dp(8))
-        })
+        val rulesCard = panel()
+        addSectionHeading(rulesCard, "YOUR DICTIONARY", "Every shortcut, organized")
         replacementCount = TextView(this).apply {
-            textSize = 12f
-            setTextColor(0xFF687078.toInt())
-            setPadding(dp(2), 0, 0, dp(6))
+            textSize = 12f; setTextColor(0xFFAAA5BC.toInt()); setPadding(0, 0, 0, dp(10))
         }
         searchField = EditText(this).apply {
-            hint = "Search originals and replacements"
-            setSingleLine(true)
-            inputType = InputType.TYPE_CLASS_TEXT
+            hint = "Search words and replacements"; setSingleLine(true); textSize = 14f
+            setTextColor(0xFFF8F5FF.toInt()); setHintTextColor(0xFF89839B.toInt())
+            inputType = InputType.TYPE_CLASS_TEXT; background = rounded(0xFF24243A.toInt(), 14)
+            setPadding(dp(14), 0, dp(14), 0)
             addTextChangedListener(object : TextWatcher {
                 override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
                 override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                    searchQuery = s?.toString()?.trim().orEmpty()
-                    visibleRuleCount = 10
-                    renderedSearchQuery = null
-                    refresh()
+                    searchQuery = s?.toString()?.trim().orEmpty(); visibleRuleCount = 10
+                    renderedSearchQuery = null; refresh()
                 }
                 override fun afterTextChanged(s: Editable?) = Unit
             })
         }
-        content.addView(searchField, LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, dp(50)
-        ).apply { bottomMargin = dp(6) })
-        content.addView(replacementCount)
+        rulesCard.addView(searchField, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, dp(50)).apply { bottomMargin = dp(10) })
+        rulesCard.addView(replacementCount)
         list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        content.addView(list)
-        showMoreButton = button("Show more") { }
-        content.addView(showMoreButton)
+        rulesCard.addView(list)
+        showMoreButton = button("Show more") { }.apply {
+            background = rounded(0xFF24243A.toInt(), 14); setTextColor(0xFFE8DDFF.toInt())
+        }
+        rulesCard.addView(showMoreButton, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, dp(46)).apply { topMargin = dp(8) })
+        val ruleActions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; setPadding(0, dp(12), 0, 0) }
+        ruleActions.addView(button("+  Add replacement") { showRuleDialog(null) },
+            LinearLayout.LayoutParams(0, dp(50), 1f).apply { rightMargin = dp(5) })
+        ruleActions.addView(button("Import rules") { showImportDialog() },
+            LinearLayout.LayoutParams(0, dp(50), 1f).apply { leftMargin = dp(5) })
+        rulesCard.addView(ruleActions)
+        content.addView(rulesCard)
 
-        content.addView(button("Copy loadout rules") {
-            copy(BulkRuleParser.export(LoadoutStore.active(this).rules))
-            toast("Loadout rules copied")
-        }.apply {
-            setPadding(dp(8), dp(4), dp(8), dp(4))
+        val dataCard = panel()
+        addSectionHeading(dataCard, "PORTABILITY", "Your data stays yours")
+        dataCard.addView(button("Copy loadout rules") {
+            copy(BulkRuleParser.export(LoadoutStore.active(this).rules)); toast("Loadout rules copied")
         })
-
-        content.addView(button("Download loadout") { downloadActiveLoadout() })
-        content.addView(button("Back up all loadouts (.json)") { downloadBackup() })
-        content.addView(button("Restore loadouts from backup") { restoreBackup() })
+        dataCard.addView(button("Download loadout (.txt)") { downloadActiveLoadout() },
+            LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)).apply { topMargin = dp(8) })
+        dataCard.addView(button("Back up all loadouts (.json)") { downloadBackup() },
+            LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)).apply { topMargin = dp(8) })
+        dataCard.addView(button("Restore from backup") { restoreBackup() }.apply {
+            background = rounded(0xFF24243A.toInt(), 14); setTextColor(0xFFE8DDFF.toInt())
+        }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)).apply { topMargin = dp(8) })
+        content.addView(dataCard)
+        content.addView(TextView(this).apply {
+            text = "MOHXIFY · MADE FOR YOUR LANGUAGE"; textSize = 9f; letterSpacing = .14f
+            gravity = Gravity.CENTER; setTextColor(0xFF716B83.toInt()); setPadding(0, dp(20), 0, dp(8))
+        })
         scroll.addView(content)
-        page.addView(scroll, LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f
-        ))
+        page.addView(scroll, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
         setContentView(page)
         refresh()
+    }
+
+    private fun panel(color: Int = 0xFF151625.toInt(), radius: Int = 22) =
+        LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(15), dp(16), dp(15), dp(16))
+            background = GradientDrawable().apply {
+                setColor(color); cornerRadius = dp(radius).toFloat(); setStroke(dp(1), 0xFF302B43.toInt())
+            }
+            elevation = dp(2).toFloat()
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = dp(13) }
+        }
+
+    private fun addSectionHeading(parent: LinearLayout, eyebrow: String, heading: String) {
+        parent.addView(TextView(this).apply {
+            text = eyebrow; textSize = 9f; letterSpacing = .14f
+            typeface = Typeface.DEFAULT_BOLD; setTextColor(0xFFB59BFF.toInt())
+        })
+        parent.addView(TextView(this).apply {
+            text = heading; textSize = 18f; typeface = Typeface.DEFAULT_BOLD
+            setTextColor(0xFFF6F2FF.toInt()); setPadding(0, dp(4), 0, dp(12))
+        })
     }
 
     private fun button(label: String, action: () -> Unit) = Button(this).apply {
         text = label
         textSize = 14f
         isAllCaps = false
-        setTextColor(0xFF243247.toInt())
-        background = rounded(0xFFE7ECF4.toInt(), 14)
+        setTextColor(0xFFF7F3FF.toInt())
+        background = rounded(0xFF7040D8.toInt(), 14)
         minHeight = dp(48)
         setOnClickListener { action() }
     }
@@ -208,8 +255,8 @@ class MainActivity : Activity() {
         textSize = if (label == "+") 23f else 21f
         isAllCaps = false
         minWidth = dp(42)
-        setTextColor(0xFF263238.toInt())
-        background = rounded(0xFFE7ECF4.toInt(), 14)
+        setTextColor(0xFFE8DDFF.toInt())
+        background = rounded(0xFF29263B.toInt(), 14)
         setOnClickListener { action() }
     }
 
@@ -283,9 +330,12 @@ class MainActivity : Activity() {
                     val row = LinearLayout(this).apply {
                         orientation = LinearLayout.HORIZONTAL
                         gravity = Gravity.CENTER_VERTICAL
-                        setPadding(dp(12), dp(5), dp(4), dp(5))
-                        background = rounded(0xFFFFFFFF.toInt(), 14)
-                        elevation = dp(1).toFloat()
+                        setPadding(dp(12), dp(9), dp(4), dp(9))
+                        background = GradientDrawable().apply {
+                            setColor(0xFF202033.toInt())
+                            cornerRadius = dp(14).toFloat()
+                            setStroke(dp(1), 0xFF343047.toInt())
+                        }
                     }
                     row.addView(LinearLayout(this).apply {
                         orientation = LinearLayout.VERTICAL
@@ -293,12 +343,12 @@ class MainActivity : Activity() {
                             text = first.from
                             textSize = 15f
                             typeface = Typeface.DEFAULT_BOLD
-                            setTextColor(0xFF20252A.toInt())
+                            setTextColor(0xFFF7F3FF.toInt())
                         })
                         addView(TextView(this@MainActivity).apply {
                             text = synonyms.joinToString("  ·  ") { it.to }
                             textSize = 13f
-                            setTextColor(0xFF687078.toInt())
+                            setTextColor(0xFFAAA4BC.toInt())
                         })
                     }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
                     row.addView(compactButton("✎") { showRuleDialog(first) })
