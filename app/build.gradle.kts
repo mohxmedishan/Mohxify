@@ -29,7 +29,7 @@ android {
     defaultConfig {
         applicationId = "com.mohx.mohxify"
         minSdk = 26
-        targetSdk = 29
+        targetSdk = 35
         val runNumber = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
         versionCode = runNumber
         versionName = "1.$runNumber"
