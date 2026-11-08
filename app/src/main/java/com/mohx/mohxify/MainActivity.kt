@@ -214,6 +214,12 @@ class MainActivity : Activity() {
         ruleActions.addView(button("Import rules") { showImportDialog() },
             LinearLayout.LayoutParams(0, dp(50), 1f).apply { leftMargin = dp(5) })
         rulesCard.addView(ruleActions)
+        rulesCard.addView(button("Try a shortcut  ↗") { showRuleTester() }.apply {
+            background = rounded(0xFF29243B.toInt(), 14)
+            setTextColor(0xFFE8DDFF.toInt())
+        }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(44)).apply {
+            topMargin = dp(7)
+        })
         content.addView(rulesCard)
 
         val dataCard = panel()
@@ -242,7 +248,7 @@ class MainActivity : Activity() {
     private fun panel(color: Int = 0xFF151625.toInt(), radius: Int = 22) =
         LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(15), dp(16), dp(15), dp(16))
+            setPadding(dp(13), dp(13), dp(13), dp(13))
             background = GradientDrawable().apply {
                 setColor(color); cornerRadius = dp(radius).toFloat(); setStroke(dp(1), 0xFF302B43.toInt())
             }
@@ -425,6 +431,58 @@ class MainActivity : Activity() {
             } else 10
             refresh()
         }
+    }
+
+    private fun showRuleTester() {
+        val input = EditText(this).apply {
+            hint = "Type a trigger word, e.g. what"
+            setSingleLine(true)
+            textSize = 15f
+            setTextColor(0xFFF7F3FF.toInt())
+            setHintTextColor(0xFF89839B.toInt())
+            inputType = InputType.TYPE_CLASS_TEXT
+            background = rounded(0xFF24243A.toInt(), 14)
+            setPadding(dp(14), dp(10), dp(14), dp(10))
+        }
+        val result = TextView(this).apply {
+            text = "Your replacement preview will appear here."
+            textSize = 14f
+            setTextColor(0xFFC7B4FF.toInt())
+            setPadding(dp(2), dp(14), dp(2), dp(4))
+        }
+        val alternatives = TextView(this).apply {
+            textSize = 12f
+            setTextColor(0xFFAAA4BC.toInt())
+        }
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(18), dp(8), dp(18), dp(8))
+            addView(input)
+            addView(result)
+            addView(alternatives)
+        }
+        input.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                val word = s?.toString()?.trim().orEmpty()
+                val matches = if (word.isBlank() || word.any { it.isWhitespace() }) emptyList()
+                    else ReplacementEngine.alternatives(word, LoadoutStore.active(this@MainActivity).rules)
+                result.text = when {
+                    word.isBlank() -> "Your replacement preview will appear here."
+                    word.any { it.isWhitespace() } -> "Enter one trigger word at a time."
+                    matches.isEmpty() -> "No matching rule in this workspace."
+                    else -> "\$word  →  \$\{matches.first()}"
+                }
+                alternatives.text = if (matches.size > 1) "Other alternatives: \$\{matches.drop(1).joinToString("  ·  ")}" else ""
+            }
+            override fun afterTextChanged(s: Editable?) = Unit
+        })
+        AlertDialog.Builder(this)
+            .setTitle("Try a shortcut")
+            .setMessage("Test the active workspace without typing in another app.")
+            .setView(content)
+            .setPositiveButton("Done", null)
+            .show()
     }
 
     private fun showHowToUse() {
