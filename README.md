@@ -30,7 +30,7 @@ GIF mappings and selected document URIs are stored locally. Mohxify does not upl
 
 ## Desktop apps
 
-A separate Windows and macOS desktop application is being developed in [desktop/](desktop/). It uses Tauri 2 and keeps its rules and loadouts locally on the device. See [docs/DESKTOP.md](docs/DESKTOP.md) for setup and build instructions. Android remains the existing Kotlin app and its APK workflow is unchanged.
+A separate Tauri 2 desktop application is being developed in [desktop/](desktop/), with Windows (.exe), macOS (.dmg), and Linux (.deb) installers. The Linux package targets x86_64 Debian-based systems, including supported Chromebook Linux environments. The website provides direct links to the individual installer files; Android APK releases remain separate. See [docs/DESKTOP.md](docs/DESKTOP.md) for setup and build instructions. Android remains the existing Kotlin app and its APK workflow is unchanged.
 
 ## Build
 
