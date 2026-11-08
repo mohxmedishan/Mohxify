@@ -119,7 +119,7 @@ class MohxifyActionsActivity : Activity() {
             hint = "Trigger phrase, e.g. I love you"; setSingleLine(true); setTextColor(0xFF171522.toInt())
         }
         AlertDialog.Builder(this).setTitle("Create GIF action")
-            .setMessage("The keyboard shortcut will be ,${trigger.replace(Regex("\\s+"), "")}. Type it in a chat and press space to insert the saved GIF.")
+            .setMessage("The keyboard shortcut will be ,${input.text.toString().trim().replace(Regex("\\s+"), "")}. Type it in a chat and press space to insert the saved GIF.")
             .setView(input).setNegativeButton("Cancel", null)
             .setPositiveButton("Choose GIF") { _, _ ->
                 val trigger = input.text.toString().trim()
