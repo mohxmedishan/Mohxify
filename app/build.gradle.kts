@@ -10,11 +10,19 @@ android {
     signingConfigs {
         create("permanentDebug") {
             storeFile = file("mohxify-debug.keystore")
-            // Must match generate-keystore.yml exactly.
+            // Temporary compatibility path for existing installs. This public legacy
+            // key must not be used for future public production releases.
             storePassword = "mohxify-debug-password"
             keyAlias = "mohxify"
             keyPassword = "mohxify-debug-password"
             storeType = "JKS"
+        }
+        create("privateRelease") {
+            val keyPath = System.getenv("MOHXIFY_KEYSTORE_PATH")
+            storeFile = if (keyPath.isNullOrBlank()) file("missing-release-key.jks") else rootProject.file(keyPath)
+            storePassword = System.getenv("MOHXIFY_STORE_PASSWORD") ?: ""
+            keyAlias = System.getenv("MOHXIFY_KEY_ALIAS") ?: ""
+            keyPassword = System.getenv("MOHXIFY_KEY_PASSWORD") ?: ""
         }
     }
 
@@ -31,6 +39,14 @@ android {
         getByName("debug") {
             signingConfig = signingConfigs.getByName("permanentDebug")
         }
+        getByName("release") {
+            isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("privateRelease")
+        }
+    }
+
+    testOptions {
+        unitTests.isReturnDefaultValues = true
     }
 
     compileOptions {
@@ -38,4 +54,8 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
+}
+
+dependencies {
+    testImplementation("junit:junit:4.13.2")
 }

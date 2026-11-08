@@ -1,0 +1,9 @@
+# Private signing material
+app/mohxify-release.keystore
+*.jks
+keystore.properties
+
+# Android/Gradle build output
+.gradle/
+**/build/
+local.properties

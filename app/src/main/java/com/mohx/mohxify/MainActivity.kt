@@ -11,7 +11,10 @@ import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.text.Editable
 import android.text.InputType
+import android.text.TextWatcher
+import org.json.JSONObject
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -33,9 +36,14 @@ class MainActivity : Activity() {
     private var renderedRules: List<Rule>? = null
     private var renderedRuleCount = -1
     private var importTextField: EditText? = null
+    private lateinit var searchField: EditText
+    private var searchQuery = ""
+    private var renderedSearchQuery: String? = null
     companion object {
         private const val REQUEST_OPEN_RULES = 4101
         private const val REQUEST_SAVE_LOADOUT = 4102
+        private const val REQUEST_SAVE_BACKUP = 4103
+        private const val REQUEST_OPEN_BACKUP = 4104
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -94,6 +102,12 @@ class MainActivity : Activity() {
         }
         serviceButton.text = "Enable accessibility service"
         content.addView(serviceButton)
+        content.addView(TextView(this).apply {
+            text = "Compatibility: Mohxify works best in standard editable text fields. Some apps use custom editors that cannot accept replacements. Password fields are skipped."
+            textSize = 12f
+            setTextColor(0xFF687078.toInt())
+            setPadding(dp(4), dp(7), dp(4), dp(7))
+        })
 
         val selectorRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -111,6 +125,7 @@ class MainActivity : Activity() {
         deleteButton = compactButton("×") { deleteActiveLoadout() }
         deleteButton.contentDescription = "Delete selected loadout"
         selectorRow.addView(deleteButton, iconParams())
+        selectorRow.addView(compactButton("⧉") { duplicateActiveLoadout() }, iconParams())
         selectorRow.addView(compactButton("+") { createLoadout() }, iconParams())
         content.addView(selectorRow)
 
@@ -136,6 +151,24 @@ class MainActivity : Activity() {
             setTextColor(0xFF687078.toInt())
             setPadding(dp(2), 0, 0, dp(6))
         }
+        searchField = EditText(this).apply {
+            hint = "Search originals and replacements"
+            setSingleLine(true)
+            inputType = InputType.TYPE_CLASS_TEXT
+            addTextChangedListener(object : TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                    searchQuery = s?.toString()?.trim().orEmpty()
+                    visibleRuleCount = 10
+                    renderedSearchQuery = null
+                    refresh()
+                }
+                override fun afterTextChanged(s: Editable?) = Unit
+            })
+        }
+        content.addView(searchField, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, dp(50)
+        ).apply { bottomMargin = dp(6) })
         content.addView(replacementCount)
         list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         content.addView(list)
@@ -150,6 +183,8 @@ class MainActivity : Activity() {
         })
 
         content.addView(button("Download loadout") { downloadActiveLoadout() })
+        content.addView(button("Back up all loadouts (.json)") { downloadBackup() })
+        content.addView(button("Restore loadouts from backup") { restoreBackup() })
         scroll.addView(content)
         page.addView(scroll, LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f
@@ -223,20 +258,27 @@ class MainActivity : Activity() {
             displayedLoadoutId = active.id
             visibleRuleCount = 10
         }
-        val totalRules = active.rules.size
-        val shownRules = minOf(visibleRuleCount, totalRules)
-        replacementCount.text = "$shownRules of $totalRules replacements"
-        showMoreButton.visibility = if (totalRules > 10) View.VISIBLE else View.GONE
-        showMoreButton.text = if (shownRules < totalRules) {
-            "Show 10 more (${totalRules - shownRules} left)"
+        val groupedRules = active.rules.groupBy { it.from.lowercase(java.util.Locale.ROOT) }.values.toList()
+        val filteredGroups = if (searchQuery.isBlank()) groupedRules else groupedRules.filter { group ->
+            group.any { it.from.contains(searchQuery, true) || it.to.contains(searchQuery, true) }
+        }
+        val shownGroups = filteredGroups.take(visibleRuleCount)
+        val shownRules = shownGroups.sumOf { it.size }
+        replacementCount.text = if (searchQuery.isBlank()) {
+            "$shownRules of ${active.rules.size} replacements"
+        } else {
+            "$shownRules of ${filteredGroups.sumOf { it.size }} matching replacements · ${active.rules.size} total"
+        }
+        showMoreButton.visibility = if (filteredGroups.size > 10) View.VISIBLE else View.GONE
+        showMoreButton.text = if (shownGroups.size < filteredGroups.size) {
+            "Show 10 more (${filteredGroups.size - shownGroups.size} groups left)"
         } else "Show fewer"
         val rulesNeedRendering = renderedLoadoutId != active.id ||
-            renderedRules != active.rules || renderedRuleCount != shownRules
+            renderedRules != active.rules || renderedRuleCount != shownGroups.size ||
+            renderedSearchQuery != searchQuery
         if (rulesNeedRendering) {
             list.removeAllViews()
-            active.rules.take(shownRules)
-                .groupBy { it.from.lowercase(java.util.Locale.ROOT) }
-                .values.forEach { synonyms ->
+            shownGroups.forEach { synonyms ->
                     val first = synonyms.first()
                     val row = LinearLayout(this).apply {
                         orientation = LinearLayout.HORIZONTAL
@@ -276,19 +318,21 @@ class MainActivity : Activity() {
                         ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
                     ).apply { bottomMargin = dp(7) })
                 }
-            if (active.rules.isEmpty()) list.addView(TextView(this).apply {
-                text = "No replacements yet. Add one or import a list."
+            if (shownGroups.isEmpty()) list.addView(TextView(this).apply {
+                text = if (searchQuery.isBlank()) "No replacements yet. Add one or import a list."
+                else "No matches. Try another word or replacement."
                 textSize = 14f
                 setTextColor(0xFF687078.toInt())
                 setPadding(dp(12), dp(18), dp(12), dp(18))
             })
             renderedLoadoutId = active.id
             renderedRules = active.rules.toList()
-            renderedRuleCount = shownRules
+            renderedRuleCount = shownGroups.size
+            renderedSearchQuery = searchQuery
         }
         showMoreButton.setOnClickListener {
-            visibleRuleCount = if (visibleRuleCount < totalRules) {
-                minOf(visibleRuleCount + 10, totalRules)
+            visibleRuleCount = if (visibleRuleCount < filteredGroups.size) {
+                minOf(visibleRuleCount + 10, filteredGroups.size)
             } else 10
             refresh()
         }
@@ -310,6 +354,23 @@ class MainActivity : Activity() {
         val created = Loadout(LoadoutStore.newId(), name, emptyList())
         LoadoutStore.save(this, items + created, created.id)
         refresh()
+    }
+
+    private fun duplicateActiveLoadout() {
+        val items = LoadoutStore.all(this)
+        val source = LoadoutStore.active(this)
+        val baseName = "${source.name} copy"
+        var name = baseName
+        var suffix = 2
+        while (nameExists(name)) {
+            name = "$baseName $suffix"
+            suffix++
+        }
+        val duplicate = Loadout(LoadoutStore.newId(), name, source.rules.toList())
+        LoadoutStore.save(this, items + duplicate, duplicate.id)
+        renderedRules = null
+        refresh()
+        toast("Loadout duplicated")
     }
 
     private fun renameActiveLoadout() {
@@ -452,6 +513,24 @@ class MainActivity : Activity() {
         startActivityForResult(intent, REQUEST_SAVE_LOADOUT)
     }
 
+    private fun downloadBackup() {
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "application/json"
+            putExtra(Intent.EXTRA_TITLE, "mohxify-backup.json")
+        }
+        startActivityForResult(intent, REQUEST_SAVE_BACKUP)
+    }
+
+    private fun restoreBackup() {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+            putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("application/json", "text/json"))
+        }
+        startActivityForResult(intent, REQUEST_OPEN_BACKUP)
+    }
+
     @Deprecated("Deprecated in Android")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -473,6 +552,38 @@ class MainActivity : Activity() {
                 toast("Loadout downloaded")
             } catch (_: Exception) {
                 toast("Could not save loadout file")
+            }
+            REQUEST_SAVE_BACKUP -> try {
+                contentResolver.openOutputStream(uri)?.bufferedWriter()?.use {
+                    it.write(LoadoutStore.exportJson(this))
+                } ?: throw IllegalStateException("Unable to create backup")
+                toast("All loadouts backed up")
+            } catch (_: Exception) {
+                toast("Could not save backup")
+            }
+            REQUEST_OPEN_BACKUP -> try {
+                val raw = contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+                    ?: throw IllegalStateException("Unable to read backup")
+                val count = JSONObject(raw).optJSONArray("loadouts")?.length() ?: 0
+                if (count < 1) {
+                    toast("Backup contains no loadouts")
+                } else {
+                    AlertDialog.Builder(this)
+                        .setTitle("Restore backup?")
+                        .setMessage("This backup contains $count loadout(s). Restoring it replaces all current loadouts. Make a backup first if you want to keep them.")
+                        .setNegativeButton("Cancel", null)
+                        .setPositiveButton("Restore") { _, _ ->
+                            if (LoadoutStore.importJson(this, raw)) {
+                                searchQuery = ""
+                                searchField.setText("")
+                                renderedRules = null
+                                refresh()
+                                toast("Backup restored")
+                            } else toast("Backup is invalid or unsupported")
+                        }.show()
+                }
+            } catch (_: Exception) {
+                toast("Could not read a valid Mohxify backup")
             }
         }
     }

@@ -2,7 +2,7 @@
     <application
         android:allowBackup="false"
         android:label="Mohxify"
-        android:theme="@android:style/Theme.Material.Light.NoActionBar"
+        android:theme="@style/AppTheme"
         android:supportsRtl="true">
 
         <activity
