@@ -37,8 +37,13 @@ object GifSearchClient {
         }
         Thread {
             try {
-                val params = "api_key=${enc(key)}&q=${enc(query.ifBlank { "reaction" })}&limit=24&rating=g&lang=en"
-                val connection = (URL("https://api.giphy.com/v1/gifs/search?$params").openConnection() as HttpURLConnection).apply {
+                val params = if (query.isBlank()) {
+                    "api_key=${enc(key)}&limit=24&rating=g"
+                } else {
+                    "api_key=${enc(key)}&q=${enc(query.take(50))}&limit=24&rating=g&lang=en"
+                }
+                val endpoint = if (query.isBlank()) "trending" else "search"
+                val connection = (URL("https://api.giphy.com/v1/gifs/$endpoint?$params").openConnection() as HttpURLConnection).apply {
                     connectTimeout = 10000
                     readTimeout = 12000
                     requestMethod = "GET"
