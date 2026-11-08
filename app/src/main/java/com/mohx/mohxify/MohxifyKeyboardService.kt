@@ -106,6 +106,16 @@ class MohxifyKeyboardService : InputMethodService() {
     }
 
     private fun renderClipboardPanel(root: LinearLayout) {
+        if (isSensitiveEditor()) {
+            root.addView(TextView(this).apply {
+                text = "Clipboard history is disabled for password and sensitive fields."
+                textSize = 13f
+                setTextColor(Color.rgb(220, 214, 235))
+                setPadding(dp(12), dp(12), dp(12), dp(12))
+            })
+            addRow(root, listOf("ABC"))
+            return
+        }
         root.addView(toolButton("Save current clipboard") { saveCurrentClipboard(); refreshKeyboard(root) },
             LinearLayout.LayoutParams(-1, dp(42)))
         val items = clipboardHistory()
@@ -140,12 +150,27 @@ class MohxifyKeyboardService : InputMethodService() {
     }
 
     private fun saveCurrentClipboard() {
+        if (isSensitiveEditor()) return
         val manager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         val clip = manager.primaryClip
         if (clip == null || clip.itemCount == 0) return
         val value = clip.getItemAt(0).coerceToText(this)?.toString()?.trim().orEmpty()
         if (value.isBlank()) return
         saveClipboardHistory((listOf(value) + clipboardHistory().filterNot { it == value }).take(10))
+    }
+
+    private fun isSensitiveEditor(): Boolean {
+        val type = currentInputEditorInfo?.inputType ?: return false
+        val inputClass = type and android.text.InputType.TYPE_MASK_CLASS
+        val variation = type and android.text.InputType.TYPE_MASK_VARIATION
+        return (inputClass == android.text.InputType.TYPE_CLASS_TEXT &&
+            variation in listOf(
+                android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD,
+                android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD,
+                android.text.InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD
+            )) ||
+            (inputClass == android.text.InputType.TYPE_CLASS_NUMBER &&
+                variation == android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD)
     }
 
     private fun clipboardHistory(): List<String> {
