@@ -10,13 +10,19 @@ android {
     signingConfigs {
         create("permanentDebug") {
             storeFile = file("mohxify-debug.keystore")
-            // Legacy signing is retained temporarily to preserve update compatibility.
-            // Replace this with a private release key stored in GitHub Actions secrets
-            // before distributing a security-hardened public release.
+            // Temporary compatibility path for existing installs. This public legacy
+            // key must not be used for future public production releases.
             storePassword = "mohxify-debug-password"
             keyAlias = "mohxify"
             keyPassword = "mohxify-debug-password"
             storeType = "JKS"
+        }
+        create("privateRelease") {
+            val keyPath = System.getenv("MOHXIFY_KEYSTORE_PATH")
+            storeFile = if (keyPath.isNullOrBlank()) file("missing-release-key.jks") else file(keyPath)
+            storePassword = System.getenv("MOHXIFY_STORE_PASSWORD") ?: ""
+            keyAlias = System.getenv("MOHXIFY_KEY_ALIAS") ?: ""
+            keyPassword = System.getenv("MOHXIFY_KEY_PASSWORD") ?: ""
         }
     }
 
@@ -27,12 +33,15 @@ android {
         val runNumber = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
         versionCode = runNumber
         versionName = "1.$runNumber"
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         getByName("debug") {
             signingConfig = signingConfigs.getByName("permanentDebug")
+        }
+        create("release") {
+            isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("privateRelease")
         }
     }
 
