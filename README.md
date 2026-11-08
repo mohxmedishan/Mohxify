@@ -15,18 +15,9 @@ Mohxify is a local-first Android text replacement tool that works alongside your
 - Duplicate, rename, create, and delete loadouts.
 - Copy or download the current loadout as a text file.
 - Export every loadout and the active selection to a JSON backup, then restore from a validated backup with an explicit replace confirmation.
-- WhatsApp-only floating GIF Actions button, with locally saved trigger-to-GIF mappings and explicit sharing to WhatsApp.
 - Global ON/OFF switch and Quick Settings tile.
 - Checks the public GitHub Releases feed for newer versions and offers in-app APK download and installation through Android’s system installer.
 - Downloads are checked against the SHA-256 digest published with the GitHub release before installation.
-
-## WhatsApp GIF Actions
-
-When Mohxify's accessibility service is enabled, a small **GIF** button appears while WhatsApp is in the foreground. Tap it to open the Actions screen, add a trigger phrase, and choose a local GIF file. Saved actions can be searched and shared to WhatsApp.
-
-The current implementation uses Android's `ACTION_SEND` media-sharing flow. WhatsApp may ask you to choose a conversation before you send the GIF. It does **not** silently send messages or guarantee insertion into the chat that was already open. Actual in-composer GIF insertion depends on WhatsApp's handling of rich content and needs device testing.
-
-GIF mappings and selected document URIs are stored locally. Mohxify does not upload GIFs or trigger text.
 
 ## Desktop apps
 
@@ -51,10 +42,9 @@ Accessibility is powerful. Mohxify uses it to detect completed words in editable
 
 ## Privacy and compatibility
 
-- Text processing, rule storage, GIF mappings, and trigger matching happen on-device.
+- Text processing and rule storage happen on-device.
 - Mohxify uses internet access only to check public GitHub release metadata and download release APKs when you request an update. Typed text and dictionaries remain on-device and are not transmitted.
 - Password fields are skipped.
-- GIF files are selected by the user through Android's document picker and shared only after the user taps the WhatsApp share action.
 - The app supports Android 8.0 (API 26) and targets API 35. Accessibility behavior can vary between apps and Android versions, so test on the devices and text fields you use.
 - Accessibility-based text editing is not universal; custom editors may behave differently.
 

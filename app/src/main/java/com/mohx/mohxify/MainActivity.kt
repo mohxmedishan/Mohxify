@@ -58,6 +58,7 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        removeLegacyGifData()
         LoadoutStore.initialize(this)
         render()
         checkForUpdates(silent = true)
@@ -75,6 +76,16 @@ class MainActivity : Activity() {
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
 
     private fun currentVersion(): String = packageManager.getPackageInfo(packageName, 0).versionName ?: "unknown"
+
+    private fun removeLegacyGifData() {
+        val migrations = getSharedPreferences("mohxify_migrations", MODE_PRIVATE)
+        if (migrations.getBoolean("gif_system_removed_v1", false)) return
+
+        getSharedPreferences("mohxify_gif_actions", MODE_PRIVATE).edit().clear().apply()
+        java.io.File(filesDir, "gifs").deleteRecursively()
+        migrations.edit().putBoolean("gif_system_removed_v1", true).apply()
+    }
+
 
     private fun isDebugBuild(): Boolean =
         (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
