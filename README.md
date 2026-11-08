@@ -11,15 +11,17 @@ Mohxify is a local-first Android text replacement tool that works alongside your
 - Named rule loadouts, one active at a time.
 - Synonym alternatives can be cycled using Backspace after a replacement.
 - Import rules from pasted text or a `.txt` file, preview changes, and merge or replace.
-- Export/import all loadouts as a JSON backup, and copy or download the current loadout as text.
+- Copy or download the current loadout as a text file.
 - Global ON/OFF switch and Quick Settings tile.
 - No INTERNET permission. Check for updates opens the public GitHub Releases page.
+
+The storage layer also contains JSON backup serialization helpers; a complete user-facing backup/restore flow is planned rather than advertised as an existing screen.
 
 ## Build
 
 The project uses Android Gradle Plugin 8.7.3, Kotlin 2.0.21, Java 17, and compile SDK 35.
 
-Run the **Mohxify quality checks** workflow to execute JVM unit tests and build a debug APK. The release workflow is manual and requires the private signing secrets described in [Release signing](docs/RELEASE_SIGNING.md).
+Run the **Mohxify quality checks** workflow to execute JVM unit tests and build a debug APK. The signed release workflow is manual and requires the private signing secrets described in [Release signing](docs/RELEASE_SIGNING.md).
 
 ## Enable accessibility
 
@@ -40,14 +42,14 @@ Accessibility is powerful. Mohxify uses it only to detect completed words in edi
 - The app targets Android 8.0 (API 26) and currently targets API 29 for runtime behavior. Raising target SDK requires deliberate compatibility testing of the accessibility workflow and Android edge-to-edge behavior.
 - Accessibility-based text editing is not universal; custom editors may behave differently.
 
-## Signing-key security — action required before a public hardened release
+## Signing-key security — action required before a hardened public release
 
 The legacy APK signing keystore is currently committed in this public repository, and its password is present in the build configuration. Treat that signing identity as **publicly exposed**, not as a secure production key. Anyone who obtains it could sign a counterfeit update with the same Android package identity.
 
-A private release signing configuration and a manual release workflow are now prepared. Before using them:
+A private release signing configuration and a manual release workflow are prepared. Before using them:
 
 1. Generate a new private JKS release key on a trusted device or computer. Use a strong unique password and keep at least two secure backups.
-2. In GitHub repository Settings → Secrets and variables → Actions, create these repository secrets:
+2. In GitHub repository Settings → Secrets and variables → Actions, create:
    - `MOHXIFY_KEYSTORE_BASE64`: the new JKS file encoded as Base64.
    - `MOHXIFY_STORE_PASSWORD`: keystore password.
    - `MOHXIFY_KEY_ALIAS`: key alias.
@@ -55,7 +57,7 @@ A private release signing configuration and a manual release workflow are now pr
 3. Run **Build signed Mohxify release** from Actions.
 4. Verify the APK installs and works on your test device before announcing it.
 
-**Important update warning:** an APK signed with the new private key cannot update an installed APK signed with the old public legacy key. Users will need to export their JSON backup, uninstall the old app once, install the newly signed APK, and restore the backup. Do not delete the legacy key or publish the rotated APK until you have personally tested this migration and are ready to announce it.
+**Important update warning:** an APK signed with the new private key cannot update an installed APK signed with the old public legacy key. Users will need to export their dictionaries, uninstall the old app once, install the newly signed APK, and restore their dictionaries. Do not delete the legacy key or publish the rotated APK until you have personally tested this migration and are ready to announce it.
 
 Never share the new keystore or its passwords in chat, issues, commits, or screenshots.
 
