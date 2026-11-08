@@ -15,6 +15,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".GifImportActivity" android:exported="false" android:label="Import GIF from keyboard" />
+        <provider
+            android:name=".GifFileProvider"
+            android:authorities="${applicationId}.gifprovider"
+            android:exported="false"
+            android:grantUriPermissions="true" />
         <activity
             android:name=".MohxifyActionsActivity"
             android:exported="false"
