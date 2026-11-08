@@ -10,7 +10,6 @@ import android.provider.Settings
 import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -56,35 +55,10 @@ class KeyboardSetupActivity : Activity() {
             }
         }, LinearLayout.LayoutParams(-1, dp(50)).apply { topMargin = dp(10) })
         root.addView(TextView(this).apply {
-            text = "Live GIF search (GIPHY)"
-            textSize = 16f
-            typeface = Typeface.DEFAULT_BOLD
-            setTextColor(Color.WHITE)
-            setPadding(0, dp(20), 0, dp(6))
-        })
-        root.addView(TextView(this).apply {
-            text = "To enable live search, create a GIPHY API key from the GIPHY developer dashboard and save it here. The key stays in this app's local preferences."
+            text = "Mohxify Keyboard is a command pad for your saved trigger actions, not a general-purpose typing keyboard. Add and manage GIF triggers in the Mohxify GIF screen, then run them here."
             textSize = 12f
             setTextColor(Color.rgb(170, 164, 188))
-        })
-        val apiKeyField = EditText(this).apply {
-            hint = "GIPHY API key"
-            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
-            setSingleLine(true)
-            setText(GifSearchClient.apiKey(this@KeyboardSetupActivity))
-            setTextColor(Color.WHITE)
-            setHintTextColor(Color.rgb(170, 164, 188))
-        }
-        root.addView(apiKeyField, LinearLayout.LayoutParams(-1, dp(48)).apply { topMargin = dp(8) })
-        root.addView(actionButton("Save GIF API key") {
-            GifSearchClient.saveApiKey(this, apiKeyField.text.toString())
-            Toast.makeText(this, if (apiKeyField.text.isNullOrBlank()) "Live GIF search disabled." else "GIPHY key saved on this device.", Toast.LENGTH_SHORT).show()
-        }, LinearLayout.LayoutParams(-1, dp(46)).apply { topMargin = dp(6) })
-        root.addView(TextView(this).apply {
-            text = "Core typing, emoji selection, a saved clipboard panel, and GIF-trigger search are included. GIF insertion depends on whether the app you're typing in accepts GIF content."
-            textSize = 12f
-            setTextColor(Color.rgb(170, 164, 188))
-            setPadding(0, dp(18), 0, 0)
+            setPadding(0, dp(20), 0, 0)
         })
         root.addView(Button(this).apply {
             text = "Done"
