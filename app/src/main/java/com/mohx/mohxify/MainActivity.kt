@@ -181,6 +181,17 @@ class MainActivity : Activity() {
         })
         content.addView(hero)
 
+        val rewriteCard = panel()
+        addSectionHeading(rewriteCard, "ON-DEMAND WRITING", "Rewrite Mode")
+        rewriteCard.addView(TextView(this).apply {
+            text = "Transform a complete sentence or paragraph. Review the result, then copy it into any app."
+            textSize = 13f; setTextColor(0xFFC6BED7.toInt()); setPadding(0, 0, 0, dp(10))
+        })
+        rewriteCard.addView(button("Open Rewrite Mode  →") {
+            startActivity(Intent(this, RewriteModeActivity::class.java))
+        }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(50)))
+        content.addView(rewriteCard)
+
         val loadoutCard = panel()
         addSectionHeading(loadoutCard, "YOUR WORKSPACES", "Switch your vocabulary")
         loadoutSpinner = Spinner(this).apply {
