@@ -16,7 +16,7 @@ Requirements: Node.js 22, Rust stable, and the platform prerequisites documented
     npm install
     npm run tauri -- build
 
-Build native installers on their respective operating systems. Windows produces an NSIS .exe installer and macOS produces a .dmg. The GitHub Actions workflow builds both targets independently and uploads the installers as workflow artifacts.
+The app icon is generated from the checked-in source asset automatically before dev and release builds. Build native installers on their respective operating systems. Windows produces an NSIS .exe installer and macOS produces a .dmg. The GitHub Actions workflow builds both targets independently and uploads the installers as workflow artifacts.
 
 ## Current desktop functionality
 
