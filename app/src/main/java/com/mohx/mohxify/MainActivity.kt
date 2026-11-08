@@ -102,6 +102,12 @@ class MainActivity : Activity() {
         }
         serviceButton.text = "Enable accessibility service"
         content.addView(serviceButton)
+        content.addView(TextView(this).apply {
+            text = "Compatibility: Mohxify works best in standard editable text fields. Some apps use custom editors that cannot accept replacements. Password fields are skipped."
+            textSize = 12f
+            setTextColor(0xFF687078.toInt())
+            setPadding(dp(4), dp(7), dp(4), dp(7))
+        })
 
         val selectorRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -312,8 +318,9 @@ class MainActivity : Activity() {
                         ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
                     ).apply { bottomMargin = dp(7) })
                 }
-            if (active.rules.isEmpty()) list.addView(TextView(this).apply {
-                text = "No replacements yet. Add one or import a list."
+            if (shownGroups.isEmpty()) list.addView(TextView(this).apply {
+                text = if (searchQuery.isBlank()) "No replacements yet. Add one or import a list."
+                else "No matches. Try another word or replacement."
                 textSize = 14f
                 setTextColor(0xFF687078.toInt())
                 setPadding(dp(12), dp(18), dp(12), dp(18))
