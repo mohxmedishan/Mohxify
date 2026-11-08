@@ -69,7 +69,7 @@ class MohxifyKeyboardService : InputMethodService() {
     private fun buildKeyboard() = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
         setPadding(dp(4), dp(6), dp(4), dp(8))
-        setBackgroundColor(Color.rgb(28, 27, 36))
+        setBackgroundColor(Color.rgb(32, 33, 36))
         refreshKeyboard(this)
     }
 
@@ -80,12 +80,12 @@ class MohxifyKeyboardService : InputMethodService() {
             gravity = Gravity.CENTER_VERTICAL
         }
         toolbar.addView(TextView(this).apply {
-            text = "MOHXIFY"
-            textSize = 11f
+            text = "▦"
+            textSize = 22f
             typeface = Typeface.DEFAULT_BOLD
             gravity = Gravity.CENTER_VERTICAL
-            setTextColor(Color.rgb(190, 166, 255))
-        }, LinearLayout.LayoutParams(0, dp(34), 1f))
+            setTextColor(Color.rgb(232, 234, 237))
+        }, LinearLayout.LayoutParams(0, dp(34), 0.8f))
         toolbar.addView(toolButton("☺") { panel = if (panel == Panel.EMOJI) Panel.KEYS else Panel.EMOJI; refreshKeyboard(root) })
         toolbar.addView(toolButton("▤") { panel = if (panel == Panel.CLIPBOARD) Panel.KEYS else Panel.CLIPBOARD; refreshKeyboard(root) })
         toolbar.addView(toolButton("GIF") { panel = if (panel == Panel.GIFS) Panel.KEYS else Panel.GIFS; refreshKeyboard(root) })
@@ -392,7 +392,7 @@ class MohxifyKeyboardService : InputMethodService() {
         text = label
         textSize = 12f
         isAllCaps = false
-        setTextColor(Color.rgb(250, 247, 255))
+        setTextColor(Color.rgb(250, 250, 250))
         background = keyBackground(label)
         minWidth = 0
         minimumWidth = 0
@@ -409,7 +409,7 @@ class MohxifyKeyboardService : InputMethodService() {
         }
         keys.forEach { key ->
             val label = when (key) {
-                "space" -> "English (US)"
+                "space" -> "English"
                 "⇧" -> if (shifted) "⬆" else "⇧"
                 else -> key
             }
@@ -417,7 +417,7 @@ class MohxifyKeyboardService : InputMethodService() {
                 text = label
                 textSize = when (key) { "space" -> 11f; "⇧", "⌫", "↵", "?123", "ABC" -> 13f; else -> 17f }
                 isAllCaps = false
-                setTextColor(Color.rgb(250, 247, 255))
+                setTextColor(if (key == "↵") Color.rgb(32, 33, 36) else Color.rgb(250, 250, 250))
                 background = keyBackground(key)
                 setPadding(dp(1), 0, dp(1), 0)
                 minWidth = 0
@@ -437,7 +437,7 @@ class MohxifyKeyboardService : InputMethodService() {
 
     private fun keyBackground(key: String) = GradientDrawable().apply {
         cornerRadius = dp(6).toFloat()
-        setColor(if (key in listOf("⇧","⌫","?123","ABC","↵","GIF","▤","☺")) Color.rgb(77, 72, 94) else Color.rgb(57, 55, 68))
+        setColor(when (key) { "↵" -> Color.rgb(138, 180, 248); "⇧", "⌫", "?123", "ABC", "GIF", "▤", "☺" -> Color.rgb(82, 85, 92); else -> Color.rgb(65, 67, 74) })
     }
 
     private fun handleKey(key: String) {
