@@ -12,9 +12,8 @@ Mohxify should grow from a text-replacement utility into a privacy-first persona
 
 ## Phase 1 — Make the current app dependable
 
-- Search and filter large dictionaries.
-- Duplicate, rename, import, export, and back up individual loadouts.
-- Add robust JSON backup restore with validation and a non-destructive preview.
+- Harden JSON backup validation with malformed-file and oversized-file tests.
+- Add a dedicated loadout management screen as the number of loadouts grows.
 - Improve the first-run setup and Accessibility explanation.
 - Add automated tests for replacement, parsing, migrations, and backup formats.
 - Add compatibility diagnostics for apps that do not expose editable text.
