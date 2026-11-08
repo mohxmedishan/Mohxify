@@ -9,6 +9,7 @@
         android:label="Mohxify"
         android:theme="@style/AppTheme"
         android:supportsRtl="true">
+        <activity android:name=".RewriteModeActivity" android:exported="false" />
         <activity android:name=".MainActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
