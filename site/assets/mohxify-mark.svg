@@ -1,7 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-<defs><linearGradient id="m" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#fff"/><stop offset=".55" stop-color="#d9b7ff"/><stop offset="1" stop-color="#8b35ff"/></linearGradient><linearGradient id="ring"><stop stop-color="#8d00ff"/><stop offset=".5" stop-color="#ec53ff"/><stop offset="1" stop-color="#7600ff"/></linearGradient><filter id="glow"><feGaussianBlur stdDeviation="9" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
-<rect x="18" y="18" width="476" height="476" rx="112" fill="#090313" stroke="#9b28ff" stroke-width="12"/>
-<g fill="#e5a0ff" filter="url(#glow)"><path d="M92 104l13 31 31 13-31 13-13 31-13-31-31-13 31-13z"/><path d="M410 196l9 22 22 9-22 9-9 22-9-22-22-9 22-9z"/></g>
-<path d="M126 327L172 115Q177 91 202 103L256 187 310 103Q335 91 340 115L386 327Q390 351 365 358L325 369 287 218 256 267 225 218 187 369 147 358Q122 351 126 327Z" fill="url(#m)" stroke="#260044" stroke-width="15" stroke-linejoin="round"/>
-<path d="M75 300C145 158 319 74 425 131C470 155 425 238 355 275C274 318 157 338 90 322" fill="none" stroke="#260044" stroke-width="35" stroke-linecap="round"/><path d="M75 300C145 158 319 74 425 131C470 155 425 238 355 275C274 318 157 338 90 322" fill="none" stroke="url(#ring)" stroke-width="22" stroke-linecap="round"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+<title id="title">Mohxify mark</title><desc id="desc">A bold M monogram inside a violet orbit.</desc>
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#1b1530"/><stop offset="1" stop-color="#090a12"/></linearGradient><linearGradient id="violet" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c4a7ff"/><stop offset=".52" stop-color="#8b5cf6"/><stop offset="1" stop-color="#6332df"/></linearGradient><filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="15" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+<rect x="16" y="16" width="480" height="480" rx="132" fill="url(#bg)" stroke="#49356f" stroke-width="8"/><circle cx="256" cy="256" r="170" fill="#8b5cf6" opacity=".09"/>
+<path d="M105 295C151 142 350 82 411 159C464 226 371 336 230 365C176 376 123 367 91 345" fill="none" stroke="url(#violet)" stroke-width="22" stroke-linecap="round" filter="url(#glow)"/>
+<path d="M132 354L173 151Q178 127 201 139L256 222L311 139Q334 127 339 151L380 354Q384 374 363 380L324 390L289 245L256 296L223 245L188 390L149 380Q128 374 132 354Z" fill="#fff"/><circle cx="390" cy="122" r="11" fill="#d9c8ff"/></svg>

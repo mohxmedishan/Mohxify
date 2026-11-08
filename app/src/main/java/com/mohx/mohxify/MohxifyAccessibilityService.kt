@@ -15,7 +15,8 @@ class MohxifyAccessibilityService : AccessibilityService() {
         val tokenStart: Int,
         val original: String,
         val alternatives: List<String>,
-        val selectedIndex: Int
+        val selectedIndex: Int,
+        val tokenSuffix: String
     )
 
     // Kept only for the immediately-following Backspace on the generated trailing space.
@@ -58,7 +59,7 @@ class MohxifyAccessibilityService : AccessibilityService() {
                     val nextIndex = stamp.selectedIndex + 1
                     if (nextIndex < stamp.alternatives.size) {
                         val next = stamp.alternatives[nextIndex]
-                        val updated = current.substring(0, stamp.tokenStart) + next + previous!!.last()
+                        val updated = current.substring(0, stamp.tokenStart) + next + stamp.tokenSuffix + previous!!.last()
                         if (setTextAndCursor(node, updated, updated.length)) {
                             lastReplacement = stamp.copy(
                                 afterText = updated,
@@ -137,6 +138,7 @@ class MohxifyAccessibilityService : AccessibilityService() {
                     afterText = updated,
                     tokenStart = absoluteTokenStart,
                     original = original,
+                    tokenSuffix = token.substring(coreEnd),
                     alternatives = alternatives,
                     selectedIndex = 0
                 )

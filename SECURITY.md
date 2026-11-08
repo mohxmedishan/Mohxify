@@ -1,15 +1,11 @@
 # Security policy
 
-## Supported releases
+## Signing identity
 
-Mohxify is currently a personal, open-source Android project. Report suspected vulnerabilities privately to the repository owner rather than publishing exploit details in a public issue.
+The legacy debug keystore was exposed in the public repository history. It is compromised and must never be reused. The current source tree removes the keystore and CI uses Gradle's generated local debug signing identity. Production releases must use the private signing secrets documented in [Release signing](docs/RELEASE_SIGNING.md).
 
-## Important current limitation
+Removing a file from the current branch does not erase it from existing Git history or previously downloaded clones. Treat the old certificate and password as public indefinitely.
 
-The legacy APK signing keystore and its password are present in this public repository. Treat that signing identity as compromised. A malicious party with the key can sign an APK that Android may accept as an update to an installation signed with that same key.
+## Reporting
 
-The project now contains a separate private-release signing path. It must be configured with a new key stored only in GitHub Actions secrets before a hardened public release. See [private release signing setup](docs/RELEASE_SIGNING.md).
-
-## Privacy
-
-The current app does not request the INTERNET permission. Text replacement and rule storage are local. The Accessibility service is powerful and should be enabled only by users who trust the app. Password fields are skipped by the replacement service.
+Please report security concerns privately to the repository owner rather than publishing exploit details in an issue. Do not include private keystores, passwords, or personal text in reports.
