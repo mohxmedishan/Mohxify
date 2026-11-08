@@ -119,6 +119,15 @@ class MohxifyKeyboardService : InputMethodService() {
 
     private fun renderActions(list: LinearLayout) {
         list.removeAllViews()
+        if (isSensitiveField()) {
+            list.addView(TextView(this).apply {
+                text = "Mohxify commands are disabled in password fields."
+                textSize = 13f
+                setTextColor(Color.rgb(180, 174, 198))
+                setPadding(dp(2), dp(8), dp(2), dp(12))
+            })
+            return
+        }
         val activeLoadout = LoadoutStore.active(this)
         val allGifActions = GifActionStore.all(this)
         val textRules = if (commandFilter == CommandFilter.GIFS) emptyList() else activeLoadout.rules
@@ -199,6 +208,15 @@ class MohxifyKeyboardService : InputMethodService() {
                 })
             }
         }
+    }
+
+    private fun isSensitiveField(): Boolean {
+        val inputType = currentInputEditorInfo?.inputType ?: return false
+        val variation = inputType and InputType.TYPE_MASK_VARIATION
+        return variation == InputType.TYPE_TEXT_VARIATION_PASSWORD ||
+            variation == InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD ||
+            variation == InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD ||
+            variation == InputType.TYPE_NUMBER_VARIATION_PASSWORD
     }
 
     private fun addSectionHeader(list: LinearLayout, title: String, detail: String) {
