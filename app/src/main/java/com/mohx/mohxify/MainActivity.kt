@@ -2,6 +2,7 @@ package com.mohx.mohxify
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.app.ProgressDialog
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -10,6 +11,7 @@ import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
+import android.os.Build
 import android.provider.Settings
 import android.text.Editable
 import android.text.InputType
@@ -31,6 +33,12 @@ class MainActivity : Activity() {
     private lateinit var replacementCount: TextView
     private lateinit var showMoreButton: Button
     private lateinit var masterToggle: Button
+    private lateinit var updateStatus: TextView
+    private lateinit var updateButton: Button
+    private var updateCheckRunning = false
+    private var downloadingUpdate = false
+    private var awaitingInstallPermission = false
+    private var pendingRelease: UpdateManager.Release? = null
     private var visibleRuleCount = 10
     private var displayedLoadoutId: String? = null
     private var renderedLoadoutId: String? = null
@@ -51,14 +59,24 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         LoadoutStore.initialize(this)
         render()
+        checkForUpdates(silent = true)
     }
 
     override fun onResume() {
         super.onResume()
         if (::status.isInitialized) refresh()
+        if (awaitingInstallPermission && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && packageManager.canRequestPackageInstalls()) {
+            awaitingInstallPermission = false
+            pendingRelease?.let { startUpdateDownload(it) }
+        }
     }
 
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
+
+    private fun currentVersion(): String = packageManager.getPackageInfo(packageName, 0).versionName ?: "unknown"
+
+    private fun isDebugBuild(): Boolean =
+        (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
 
     private fun render() {
         val page = LinearLayout(this).apply {
@@ -77,10 +95,10 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER_VERTICAL
             setPadding(0, dp(2), 0, dp(18))
         }
-        brand.addView(TextView(this).apply {
-            text = "M"; textSize = 25f; gravity = Gravity.CENTER
-            typeface = Typeface.create("casual", Typeface.BOLD)
-            setTextColor(0xFFFFFFFF.toInt()); background = rounded(0xFF793BFF.toInt(), 17)
+        brand.addView(ImageView(this).apply {
+            setImageResource(R.drawable.ic_mohxify_launcher)
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            contentDescription = "Mohxify logo"
         }, LinearLayout.LayoutParams(dp(48), dp(48)))
         brand.addView(LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL; setPadding(dp(12), 0, 0, 0)
@@ -95,7 +113,7 @@ class MainActivity : Activity() {
             })
         }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
         brand.addView(TextView(this).apply {
-            text = "2.1"; textSize = 11f; setTextColor(0xFFCDBBFF.toInt())
+            text = "v${currentVersion()}"; textSize = 11f; setTextColor(0xFFCDBBFF.toInt())
             setPadding(dp(10), dp(6), dp(10), dp(6)); background = rounded(0xFF211A35.toInt(), 30)
         })
         content.addView(brand)
@@ -186,7 +204,7 @@ class MainActivity : Activity() {
         }
         searchField = EditText(this).apply {
             hint = "Search words and replacements"; setSingleLine(true); textSize = 14f
-            setTextColor(0xFFF8F5FF.toInt()); setHintTextColor(0xFF89839B.toInt())
+            setTextColor(0xFFF8F5FF.toInt()); setHintTextColor(0xFFAAA4BC.toInt())
             inputType = InputType.TYPE_CLASS_TEXT; background = rounded(0xFF24243A.toInt(), 14)
             setPadding(dp(14), 0, dp(14), 0)
             addTextChangedListener(object : TextWatcher {
@@ -235,14 +253,162 @@ class MainActivity : Activity() {
             background = rounded(0xFF24243A.toInt(), 14); setTextColor(0xFFE8DDFF.toInt())
         }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)).apply { topMargin = dp(8) })
         content.addView(dataCard)
-        content.addView(TextView(this).apply {
-            text = "MOHXIFY · MADE FOR YOUR LANGUAGE"; textSize = 9f; letterSpacing = .14f
-            gravity = Gravity.CENTER; setTextColor(0xFF716B83.toInt()); setPadding(0, dp(20), 0, dp(8))
-        })
+
+        val updateCard = panel()
+        addSectionHeading(updateCard, "APP UPDATES", "Keep Mohxify current")
+        updateStatus = TextView(this).apply {
+            text = if (isDebugBuild()) "Debug build · signed releases need a one-time reinstall" else "Installed version ${currentVersion()} · Checking for updates when online"
+            textSize = 12f
+            setTextColor(0xFFAAA4BC.toInt())
+            setPadding(0, 0, 0, dp(10))
+        }
+        updateCard.addView(updateStatus)
+        updateButton = button(if (isDebugBuild()) "Switch to signed release" else "Check for updates") {
+            if (isDebugBuild()) showDebugMigrationDialog()
+            else {
+                val release = pendingRelease
+                if (release == null) checkForUpdates(silent = false) else showUpdateDialog(release)
+            }
+        }.apply {
+            background = rounded(0xFF29243B.toInt(), 14)
+            setTextColor(0xFFE8DDFF.toInt())
+        }
+        updateCard.addView(updateButton, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)))
+        content.addView(updateCard)
+
+        val footer = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            setPadding(0, dp(18), 0, dp(8))
+            addView(ImageView(this@MainActivity).apply {
+                setImageResource(R.drawable.ic_mohxify_launcher)
+                contentDescription = "Mohxify logo"
+            }, LinearLayout.LayoutParams(dp(22), dp(22)))
+            addView(TextView(this@MainActivity).apply {
+                text = "MOHXIFY · MADE FOR YOUR LANGUAGE"
+                textSize = 9f
+                letterSpacing = .12f
+                setTextColor(0xFFAAA4BC.toInt())
+                setPadding(dp(7), 0, 0, 0)
+            })
+        }
+        content.addView(footer)
         scroll.addView(content)
         page.addView(scroll, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
         setContentView(page)
         refresh()
+    }
+
+    private fun checkForUpdates(silent: Boolean) {
+        if (!::updateButton.isInitialized || updateCheckRunning) return
+        if (isDebugBuild()) {
+            updateStatus.text = "Debug build · back up your loadouts and switch to the signed release once"
+            updateButton.text = "Switch to signed release"
+            return
+        }
+        updateCheckRunning = true
+        updateButton.isEnabled = false
+        updateStatus.text = "Checking GitHub Releases…"
+        Thread {
+            try {
+                val release = UpdateManager.fetchLatest(this)
+                runOnUiThread {
+                    updateCheckRunning = false
+                    updateButton.isEnabled = true
+                    pendingRelease = release
+                    if (release == null) {
+                        updateStatus.text = "You're up to date · v${currentVersion()}"
+                        updateButton.text = "Check again"
+                    } else {
+                        updateStatus.text = "Version ${release.version} is available"
+                        updateButton.text = "Review update"
+                    }
+                }
+            } catch (error: Exception) {
+                runOnUiThread {
+                    updateCheckRunning = false
+                    updateButton.isEnabled = true
+                    updateStatus.text = "Couldn't check right now. Tap to retry."
+                    updateButton.text = "Try again"
+                    if (!silent) toast(error.message ?: "Could not check for updates")
+                }
+            }
+        }.start()
+    }
+
+    private fun showDebugMigrationDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("One-time switch to signed releases")
+            .setMessage("This installation is a debug build. Android will not let a differently signed release replace it. Back up all loadouts, uninstall this build, install the latest signed APK from GitHub Releases, then restore your backup. Future signed releases can use the in-app updater.")
+            .setNegativeButton("Later", null)
+            .setPositiveButton("Open releases") { _, _ ->
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/mohxmedishan/Mohxify/releases/latest")))
+            }
+            .show()
+    }
+
+    private fun showUpdateDialog(release: UpdateManager.Release) {
+        val details = buildString {
+            append("Version ${release.version} is available.\n\n")
+            if (release.notes.isNotBlank()) append(release.notes)
+            else append("Install the latest Mohxify release.")
+            append("\n\nThe APK will be downloaded and verified before Android opens its installer.")
+        }
+        AlertDialog.Builder(this)
+            .setTitle(release.title)
+            .setMessage(details)
+            .setNegativeButton("Later", null)
+            .setPositiveButton("Download & install") { _, _ -> startUpdateDownload(release) }
+            .show()
+    }
+
+    private fun startUpdateDownload(release: UpdateManager.Release) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !packageManager.canRequestPackageInstalls()) {
+            awaitingInstallPermission = true
+            AlertDialog.Builder(this)
+                .setTitle("Allow Mohxify to install updates")
+                .setMessage("Android requires permission before Mohxify can hand a downloaded update to the system installer. You can still cancel the installation there.")
+                .setNegativeButton("Not now") { _, _ -> awaitingInstallPermission = false }
+                .setPositiveButton("Open settings") { _, _ ->
+                    startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName")))
+                }
+                .show()
+            return
+        }
+        if (downloadingUpdate) return
+        downloadingUpdate = true
+        val progress = ProgressDialog(this).apply {
+            setTitle("Downloading Mohxify")
+            setMessage("Verifying the release before installation…")
+            setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
+            max = 100
+            setProgress(0)
+            setCancelable(false)
+            show()
+        }
+        Thread {
+            try {
+                UpdateManager.downloadAndInstall(this, release) { value ->
+                    runOnUiThread { if (progress.isShowing) progress.progress = value }
+                }
+                runOnUiThread {
+                    downloadingUpdate = false
+                    progress.dismiss()
+                    updateStatus.text = "Update downloaded · waiting for Android installer"
+                    updateButton.text = "Check for updates"
+                    pendingRelease = null
+                    toast("Confirm the Mohxify update in Android's installer")
+                }
+            } catch (error: Exception) {
+                runOnUiThread {
+                    downloadingUpdate = false
+                    progress.dismiss()
+                    updateStatus.text = "Update couldn't be installed. You can retry."
+                    updateButton.text = "Try again"
+                    toast(error.message ?: "Update download failed")
+                }
+            }
+        }.start()
     }
 
     private fun panel(color: Int = 0xFF151625.toInt(), radius: Int = 22) =
@@ -417,7 +583,7 @@ class MainActivity : Activity() {
                 text = if (searchQuery.isBlank()) "No replacements yet. Add one or import a list."
                 else "No matches. Try another word or replacement."
                 textSize = 14f
-                setTextColor(0xFF687078.toInt())
+                setTextColor(0xFFAAA4BC.toInt())
                 setPadding(dp(12), dp(18), dp(12), dp(18))
             })
             renderedLoadoutId = active.id
@@ -439,7 +605,7 @@ class MainActivity : Activity() {
             setSingleLine(true)
             textSize = 15f
             setTextColor(0xFFF7F3FF.toInt())
-            setHintTextColor(0xFF89839B.toInt())
+            setHintTextColor(0xFFAAA4BC.toInt())
             inputType = InputType.TYPE_CLASS_TEXT
             background = rounded(0xFF24243A.toInt(), 14)
             setPadding(dp(14), dp(10), dp(14), dp(10))
