@@ -181,7 +181,7 @@ class MainActivity : Activity() {
         val gifCard = panel()
         addSectionHeading(gifCard, "GIF ACTIONS", "Save keyboard GIFs to reusable triggers")
         gifCard.addView(TextView(this).apply {
-            text = "Import a GIF directly from Gboard, assign a phrase, and manage your saved WhatsApp GIF actions."
+            text = "Import GIFs, assign trigger phrases, and manage saved actions for the Mohxify command pad."
             textSize = 12f; setTextColor(0xFFAAA4BC.toInt())
         }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
             bottomMargin = dp(12)
