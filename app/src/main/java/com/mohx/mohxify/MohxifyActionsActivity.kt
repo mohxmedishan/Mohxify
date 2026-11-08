@@ -53,7 +53,7 @@ class MohxifyActionsActivity : Activity() {
         root.addView(label("WhatsApp GIF actions", 25f).apply {
             typeface = Typeface.DEFAULT_BOLD; setPadding(0, dp(7), 0, dp(4))
         })
-        root.addView(label("Search a trigger, then share its saved GIF to WhatsApp.", 13f, 0xFFB8B1C8.toInt()))
+        root.addView(label("Type ,trigger followed by a space in a chat to insert its GIF. Trigger shortcuts remove spaces automatically.", 13f, 0xFFB8B1C8.toInt()))
         search = EditText(this).apply {
             hint = "Search triggers, e.g. I love you"; setSingleLine(true); textSize = 14f
             setTextColor(0xFFF5F1FF.toInt()); setHintTextColor(0xFFAAA4BC.toInt())
@@ -119,7 +119,7 @@ class MohxifyActionsActivity : Activity() {
             hint = "Trigger phrase, e.g. I love you"; setSingleLine(true); setTextColor(0xFF171522.toInt())
         }
         AlertDialog.Builder(this).setTitle("Create GIF action")
-            .setMessage("When you search this trigger, Mohxify will offer the GIF you choose.")
+            .setMessage("The keyboard shortcut will be ,${input.text.toString().trim().replace(Regex("\\s+"), "")}. Type it in a chat and press space to insert the saved GIF.")
             .setView(input).setNegativeButton("Cancel", null)
             .setPositiveButton("Choose GIF") { _, _ ->
                 val trigger = input.text.toString().trim()
