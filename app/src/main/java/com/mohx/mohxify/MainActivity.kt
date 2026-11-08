@@ -71,7 +71,7 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
+    private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()\n\n    private fun currentVersion(): String = packageManager.getPackageInfo(packageName, 0).versionName ?: "unknown"
 
     private fun render() {
         val page = LinearLayout(this).apply {
@@ -252,7 +252,7 @@ class MainActivity : Activity() {
         val updateCard = panel()
         addSectionHeading(updateCard, "APP UPDATES", "Keep Mohxify current")
         updateStatus = TextView(this).apply {
-            text = "Installed version ${BuildConfig.VERSION_NAME} · Checking for updates when online"
+            text = "Installed version ${currentVersion()} · Checking for updates when online"
             textSize = 12f
             setTextColor(0xFFAAA4BC.toInt())
             setPadding(0, 0, 0, dp(10))
@@ -304,7 +304,7 @@ class MainActivity : Activity() {
                     updateButton.isEnabled = true
                     pendingRelease = release
                     if (release == null) {
-                        updateStatus.text = "You're up to date · v${BuildConfig.VERSION_NAME}"
+                        updateStatus.text = "You're up to date · v${currentVersion()}"
                         updateButton.text = "Check again"
                     } else {
                         updateStatus.text = "Version ${release.version} is available"
