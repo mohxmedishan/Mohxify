@@ -39,7 +39,7 @@ object UpdateManager {
             connection.disconnect()
         }
 
-        val versionMatch = Regex("""(\\d+\\.\\d+\\.\\d+)""")
+        val versionMatch = Regex("""(\d+\.\d+\.\d+)""")
             .find(release.optString("tag_name"))
             ?: throw IllegalStateException("The latest release has no readable version number")
         val latestVersion = versionMatch.value
