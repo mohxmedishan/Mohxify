@@ -8,7 +8,6 @@ import android.inputmethodservice.InputMethodService
 import android.net.Uri
 import android.view.Gravity
 import android.view.View
-import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -20,13 +19,14 @@ import android.widget.Toast
  */
 class MohxifyKeyboardService : InputMethodService() {
     private var rootView: LinearLayout? = null
-    private var query = ""
+    private enum class CommandFilter { ALL, TEXT, GIFS }
+    private var commandFilter = CommandFilter.ALL
 
     override fun onCreateInputView(): View = buildCommandPad().also { rootView = it }
 
     override fun onStartInput(attribute: android.view.inputmethod.EditorInfo?, restarting: Boolean) {
         super.onStartInput(attribute, restarting)
-        query = ""
+        commandFilter = CommandFilter.ALL
         rootView?.let { render(it) }
     }
 
@@ -59,31 +59,30 @@ class MohxifyKeyboardService : InputMethodService() {
             setTextColor(Color.rgb(180, 174, 198))
         })
 
-        val search = EditText(this).apply {
-            hint = "Search trigger phrases…"
-            setSingleLine(true)
-            textSize = 14f
-            setTextColor(Color.WHITE)
-            setHintTextColor(Color.rgb(160, 153, 178))
-            setPadding(dp(12), dp(4), dp(12), dp(4))
-            background = rounded(Color.rgb(36, 34, 54), 13)
-            setText(query)
-            addTextChangedListener(object : android.text.TextWatcher {
-                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
-                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                    query = s?.toString().orEmpty()
-                    renderActions(actionsContainer(root))
-                }
-                override fun afterTextChanged(s: android.text.Editable?) = Unit
+        val tabs = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(0, dp(12), 0, dp(8))
+        }
+        fun addFilter(label: String, filter: CommandFilter) {
+            tabs.addView(commandButton(label) {
+                commandFilter = filter
+                render(root)
+            }.apply {
+                background = rounded(
+                    if (commandFilter == filter) Color.rgb(91, 58, 168) else Color.rgb(36, 34, 54),
+                    11
+                )
+            }, LinearLayout.LayoutParams(0, dp(38), 1f).apply {
+                if (filter != CommandFilter.ALL) leftMargin = dp(6)
             })
         }
-        root.addView(search, LinearLayout.LayoutParams(-1, dp(46)).apply {
-            topMargin = dp(12)
-            bottomMargin = dp(10)
-        })
+        addFilter("All", CommandFilter.ALL)
+        addFilter("Text rules", CommandFilter.TEXT)
+        addFilter("GIF actions", CommandFilter.GIFS)
+        root.addView(tabs)
 
         root.addView(TextView(this).apply {
-            text = "SAVED COMMANDS"
+            text = when (commandFilter) { CommandFilter.ALL -> "ALL COMMANDS"; CommandFilter.TEXT -> "TEXT COMMANDS"; CommandFilter.GIFS -> "GIF COMMANDS" }
             textSize = 10f
             typeface = Typeface.DEFAULT_BOLD
             setTextColor(Color.rgb(190, 166, 255))
@@ -121,22 +120,16 @@ class MohxifyKeyboardService : InputMethodService() {
     private fun renderActions(list: LinearLayout) {
         list.removeAllViews()
         val activeLoadout = LoadoutStore.active(this)
-        val textRules = activeLoadout.rules.filter {
-            query.isBlank() ||
-                it.from.contains(query.trim(), ignoreCase = true) ||
-                it.to.contains(query.trim(), ignoreCase = true)
-        }
         val allGifActions = GifActionStore.all(this)
-        val gifActions = allGifActions.filter {
-            query.isBlank() || it.trigger.contains(query.trim(), ignoreCase = true)
-        }
+        val textRules = if (commandFilter == CommandFilter.GIFS) emptyList() else activeLoadout.rules
+        val gifActions = if (commandFilter == CommandFilter.TEXT) emptyList() else allGifActions
 
         if (textRules.isEmpty() && gifActions.isEmpty()) {
             list.addView(TextView(this).apply {
                 text = if (activeLoadout.rules.isEmpty() && allGifActions.isEmpty()) {
                     "No commands saved yet. Add text rules in your active loadout or GIF actions in the Mohxify GIF screen."
                 } else {
-                    "No commands match that search."
+                    "No commands in this section yet."
                 }
                 textSize = 13f
                 setTextColor(Color.rgb(180, 174, 198))
