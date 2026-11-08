@@ -75,6 +75,9 @@ class MainActivity : Activity() {
 
     private fun currentVersion(): String = packageManager.getPackageInfo(packageName, 0).versionName ?: "unknown"
 
+    private fun isDebugBuild(): Boolean =
+        (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
+
     private fun render() {
         val page = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -254,15 +257,18 @@ class MainActivity : Activity() {
         val updateCard = panel()
         addSectionHeading(updateCard, "APP UPDATES", "Keep Mohxify current")
         updateStatus = TextView(this).apply {
-            text = "Installed version ${currentVersion()} · Checking for updates when online"
+            text = if (isDebugBuild()) "Debug build · signed releases need a one-time reinstall" else "Installed version ${currentVersion()} · Checking for updates when online"
             textSize = 12f
             setTextColor(0xFFAAA4BC.toInt())
             setPadding(0, 0, 0, dp(10))
         }
         updateCard.addView(updateStatus)
-        updateButton = button("Check for updates") {
-            val release = pendingRelease
-            if (release == null) checkForUpdates(silent = false) else showUpdateDialog(release)
+        updateButton = button(if (isDebugBuild()) "Switch to signed release" else "Check for updates") {
+            if (isDebugBuild()) showDebugMigrationDialog()
+            else {
+                val release = pendingRelease
+                if (release == null) checkForUpdates(silent = false) else showUpdateDialog(release)
+            }
         }.apply {
             background = rounded(0xFF29243B.toInt(), 14)
             setTextColor(0xFFE8DDFF.toInt())
@@ -295,6 +301,11 @@ class MainActivity : Activity() {
 
     private fun checkForUpdates(silent: Boolean) {
         if (!::updateButton.isInitialized || updateCheckRunning) return
+        if (isDebugBuild()) {
+            updateStatus.text = "Debug build · back up your loadouts and switch to the signed release once"
+            updateButton.text = "Switch to signed release"
+            return
+        }
         updateCheckRunning = true
         updateButton.isEnabled = false
         updateStatus.text = "Checking GitHub Releases…"
@@ -323,6 +334,17 @@ class MainActivity : Activity() {
                 }
             }
         }.start()
+    }
+
+    private fun showDebugMigrationDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("One-time switch to signed releases")
+            .setMessage("This installation is a debug build. Android will not let a differently signed release replace it. Back up all loadouts, uninstall this build, install the latest signed APK from GitHub Releases, then restore your backup. Future signed releases can use the in-app updater.")
+            .setNegativeButton("Later", null)
+            .setPositiveButton("Open releases") { _, _ ->
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/mohxmedishan/Mohxify/releases/latest")))
+            }
+            .show()
     }
 
     private fun showUpdateDialog(release: UpdateManager.Release) {
