@@ -1,12 +1,21 @@
 package com.mohx.mohxify
 
 import android.accessibilityservice.AccessibilityService
+import android.content.Intent
+import android.graphics.PixelFormat
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
+import android.view.Gravity
+import android.view.View
+import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import android.widget.TextView
 
 class MohxifyAccessibilityService : AccessibilityService() {
     private var editing = false
     private var expectedReplacementText: String? = null
+    private var actionBubble: View? = null
 
     private data class LastReplacement(
         val windowId: Int,
@@ -19,14 +28,17 @@ class MohxifyAccessibilityService : AccessibilityService() {
         val tokenSuffix: String
     )
 
-    // Kept only for the immediately-following Backspace on the generated trailing space.
     private var lastReplacement: LastReplacement? = null
     private data class SuppressedReentry(val windowId: Int, val viewId: String?, val beforeText: String)
     private var suppressedReentry: SuppressedReentry? = null
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        if (editing || event == null ||
-            event.eventType != AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED) return
+        if (event == null) return
+        if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+            updateActionBubble(event.packageName?.toString())
+            return
+        }
+        if (editing || event.eventType != AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED) return
         if (!LoadoutStore.enabled(this)) {
             lastReplacement = null
             suppressedReentry = null
@@ -66,42 +78,27 @@ class MohxifyAccessibilityService : AccessibilityService() {
                                 alternatives = stamp.alternatives,
                                 selectedIndex = nextIndex
                             )
-                        } else {
-                            lastReplacement = null
-                        }
+                        } else lastReplacement = null
                     } else {
-                        // End of synonym list: leave the word alone and suppress an immediate
-                        // re-space so a target that is another rule's source cannot chain.
                         lastReplacement = null
-                        suppressedReentry = SuppressedReentry(
-                            event.windowId, node.viewIdResourceName, current
-                        )
+                        suppressedReentry = SuppressedReentry(event.windowId, node.viewIdResourceName, current)
                     }
                 } else {
-                    // Any ordinary deletion cancels the replacement marker. Never rescan deletions.
                     lastReplacement = null
                     suppressedReentry = null
                 }
                 return
             }
 
-            // Handle the one-shot synonym-cycle guard before inspecting event counts.
-            // Gboard may report a committed word as a replacement of its composing text
-            // (addedCount > 0 AND removedCount > 0), not as a pure insertion.
             val suppression = suppressedReentry
             if (suppression != null) {
                 suppressedReentry = null
                 if (suppression.windowId == event.windowId &&
                     suppression.viewId == node.viewIdResourceName &&
                     previous == suppression.beforeText &&
-                    current == suppression.beforeText + " ") {
-                    return
-                }
+                    current == suppression.beforeText + " ") return
             }
 
-            // Trigger only when this event newly introduces a trailing separator.
-            // This accepts Gboard composing-text commits while rejecting ordinary edits,
-            // deletions, and later events when the field already ended in whitespace.
             if (!ReplacementEngine.isCompletedWordSeparator(previous, current)) {
                 lastReplacement = null
                 return
@@ -121,9 +118,7 @@ class MohxifyAccessibilityService : AccessibilityService() {
             if (coreStart == coreEnd) return
 
             val original = token.substring(coreStart, coreEnd)
-            val alternatives = ReplacementEngine.alternatives(
-                original, LoadoutStore.active(this).rules
-            )
+            val alternatives = ReplacementEngine.alternatives(original, LoadoutStore.active(this).rules)
             val replacement = alternatives.firstOrNull() ?: return
             if (replacement == original) return
 
@@ -131,8 +126,7 @@ class MohxifyAccessibilityService : AccessibilityService() {
             val newToken = token.substring(0, coreStart) + replacement + token.substring(coreEnd)
             val updated = current.substring(0, tokenStart) + newToken + current.substring(separatorIndex)
             val oldSelection = try { node.textSelectionEnd } catch (_: Exception) { current.length }
-            val newCursor = (oldSelection + replacement.length - original.length)
-                .coerceIn(0, updated.length)
+            val newCursor = (oldSelection + replacement.length - original.length).coerceIn(0, updated.length)
 
             if (setTextAndCursor(node, updated, newCursor)) {
                 lastReplacement = LastReplacement(
@@ -147,18 +141,63 @@ class MohxifyAccessibilityService : AccessibilityService() {
                 )
             }
         } catch (_: Exception) {
-            // Some apps reject ACTION_SET_TEXT or selection updates.
             lastReplacement = null
         } finally {
             node.recycle()
         }
     }
 
-    private fun setTextAndCursor(
-        node: AccessibilityNodeInfo,
-        text: String,
-        cursor: Int
-    ): Boolean {
+    private fun updateActionBubble(packageName: String?) {
+        if (packageName == "com.whatsapp") {
+            if (actionBubble != null) return
+            val bubble = TextView(this).apply {
+                text = "GIF"
+                textSize = 12f
+                typeface = Typeface.DEFAULT_BOLD
+                gravity = Gravity.CENTER
+                setTextColor(0xFFFFFFFF.toInt())
+                contentDescription = "Open Mohxify WhatsApp GIF actions"
+                background = GradientDrawable(
+                    GradientDrawable.Orientation.TL_BR,
+                    intArrayOf(0xFF8B5CF6.toInt(), 0xFF5B3AA8.toInt())
+                ).apply { shape = GradientDrawable.OVAL }
+                elevation = dp(8).toFloat()
+                setOnClickListener {
+                    val launch = Intent(this@MohxifyAccessibilityService, MohxifyActionsActivity::class.java)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    startActivity(launch)
+                }
+            }
+            val params = WindowManager.LayoutParams(
+                dp(52), dp(52),
+                WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                PixelFormat.TRANSLUCENT
+            ).apply {
+                gravity = Gravity.END or Gravity.CENTER_VERTICAL
+                x = dp(8)
+                y = dp(52)
+            }
+            try {
+                (getSystemService(WINDOW_SERVICE) as WindowManager).addView(bubble, params)
+                actionBubble = bubble
+            } catch (_: Exception) { actionBubble = null }
+        } else {
+            removeActionBubble()
+        }
+    }
+
+    private fun removeActionBubble() {
+        val bubble = actionBubble ?: return
+        try { (getSystemService(WINDOW_SERVICE) as WindowManager).removeView(bubble) }
+        catch (_: Exception) { }
+        actionBubble = null
+    }
+
+    private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
+
+    private fun setTextAndCursor(node: AccessibilityNodeInfo, text: String, cursor: Int): Boolean {
         editing = true
         return try {
             val args = android.os.Bundle().apply {
@@ -172,14 +211,18 @@ class MohxifyAccessibilityService : AccessibilityService() {
             node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, selectionArgs)
             expectedReplacementText = text
             true
-        } finally {
-            editing = false
-        }
+        } finally { editing = false }
     }
 
     override fun onInterrupt() {
         lastReplacement = null
         suppressedReentry = null
         expectedReplacementText = null
+        removeActionBubble()
+    }
+
+    override fun onDestroy() {
+        removeActionBubble()
+        super.onDestroy()
     }
 }
