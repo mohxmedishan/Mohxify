@@ -473,7 +473,7 @@ class MainActivity : Activity() {
                     matches.isEmpty() -> "No matching rule in this workspace."
                     else -> "\$word  →  \$\{matches.first()}"
                 }
-                alternatives.text = if (matches.size > 1) "Other alternatives: \$\{matches.drop(1).joinToString("  ·  ")}" else ""
+                alternatives.text = if (matches.size > 1) "Other alternatives: ${matches.drop(1).joinToString("  ·  ")}" else ""
             }
             override fun afterTextChanged(s: Editable?) = Unit
         })
