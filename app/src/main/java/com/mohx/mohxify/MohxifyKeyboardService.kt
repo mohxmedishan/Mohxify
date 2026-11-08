@@ -1,37 +1,47 @@
 package com.mohx.mohxify
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.inputmethodservice.InputMethodService
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
 import android.view.View
-import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import org.json.JSONArray
 
 /**
- * First-party Mohxify IME foundation. All text is sent directly to the active
- * editor through InputConnection; this service does not transmit or log input.
+ * Mohxify's on-device IME. Typed characters are delivered to the active editor
+ * through InputConnection; this service does not transmit or log input.
  */
 class MohxifyKeyboardService : InputMethodService() {
     private var shifted = false
+    private var capsLock = false
     private var symbols = false
+    private var panel = Panel.KEYS
     private var keyboardRoot: LinearLayout? = null
 
-    override fun onCreateInputView(): View {
-        return buildKeyboard().also { keyboardRoot = it }
-    }
+    private enum class Panel { KEYS, EMOJI, CLIPBOARD, GIFS }
+
+    override fun onCreateInputView(): View =
+        buildKeyboard().also { keyboardRoot = it }
 
     override fun onStartInput(attribute: EditorInfo?, restarting: Boolean) {
         super.onStartInput(attribute, restarting)
-        shifted = attribute?.let {
-            it.inputType and android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES != 0
-        } ?: false
+        panel = Panel.KEYS
         symbols = false
+        val type = attribute?.inputType ?: 0
+        val textClass = type and android.text.InputType.TYPE_MASK_CLASS ==
+            android.text.InputType.TYPE_CLASS_TEXT
+        val caps = type and android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES != 0
+        shifted = textClass && caps
+        capsLock = false
         keyboardRoot?.let { refreshKeyboard(it) }
     }
 
@@ -40,7 +50,7 @@ class MohxifyKeyboardService : InputMethodService() {
         keyboardRoot = null
     }
 
-    private fun buildKeyboard(): LinearLayout = LinearLayout(this).apply {
+    private fun buildKeyboard() = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
         setPadding(dp(4), dp(6), dp(4), dp(8))
         setBackgroundColor(Color.rgb(28, 27, 36))
@@ -49,27 +59,123 @@ class MohxifyKeyboardService : InputMethodService() {
 
     private fun refreshKeyboard(root: LinearLayout) {
         root.removeAllViews()
-        val toolbar = TextView(this).apply {
+        val toolbar = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        toolbar.addView(TextView(this).apply {
             text = "MOHXIFY"
             textSize = 11f
             typeface = Typeface.DEFAULT_BOLD
             gravity = Gravity.CENTER_VERTICAL
             setTextColor(Color.rgb(190, 166, 255))
-            setPadding(dp(8), 0, dp(8), dp(5))
-        }
-        root.addView(toolbar, LinearLayout.LayoutParams(-1, dp(25)))
+        }, LinearLayout.LayoutParams(0, dp(34), 1f))
+        toolbar.addView(toolButton("☺") { panel = if (panel == Panel.EMOJI) Panel.KEYS else Panel.EMOJI; refreshKeyboard(root) })
+        toolbar.addView(toolButton("▤") { panel = if (panel == Panel.CLIPBOARD) Panel.KEYS else Panel.CLIPBOARD; refreshKeyboard(root) })
+        toolbar.addView(toolButton("GIF") { panel = if (panel == Panel.GIFS) Panel.KEYS else Panel.GIFS; refreshKeyboard(root) })
+        root.addView(toolbar, LinearLayout.LayoutParams(-1, dp(34)))
 
-        if (!symbols) {
-            addRow(root, listOf("q","w","e","r","t","y","u","i","o","p"))
-            addRow(root, listOf("a","s","d","f","g","h","j","k","l"))
-            addRow(root, listOf("⇧","z","x","c","v","b","n","m","⌫"))
-            addRow(root, listOf("?123",",","☺","space",".","↵"))
-        } else {
-            addRow(root, listOf("1","2","3","4","5","6","7","8","9","0"))
-            addRow(root, listOf("@","#","$","%","&","-","+","(",")","/"))
-            addRow(root, listOf("=", "*", "`", "'", ":", ";", "!", "?", "⌫"))
-            addRow(root, listOf("ABC",",","space",".","↵"))
+        when (panel) {
+            Panel.KEYS -> if (!symbols) {
+                addRow(root, listOf("q","w","e","r","t","y","u","i","o","p"))
+                addRow(root, listOf("a","s","d","f","g","h","j","k","l"))
+                addRow(root, listOf("⇧","z","x","c","v","b","n","m","⌫"))
+                addRow(root, listOf("?123",",","☺","space",".","↵"))
+            } else {
+                addRow(root, listOf("1","2","3","4","5","6","7","8","9","0"))
+                addRow(root, listOf("@","#","$","%","&","-","+","(",")","/"))
+                addRow(root, listOf("=", "*", "`", "'", ":", ";", "!", "?", "⌫"))
+                addRow(root, listOf("ABC",",","space",".","↵"))
+            }
+            Panel.EMOJI -> {
+                val emojis = listOf("😀","😂","🥹","😍","😭","😎","🥳","🤔","❤️","🔥","✨","🙏","👍","👎","👏","💀","🎉","💜","🌸","🐣","🐍","🍎","🍓","🌈","💯","😊","😴","🤍","🫶","🙃")
+                emojis.chunked(6).forEach { group -> addRow(root, group) }
+                addRow(root, listOf("ABC"))
+            }
+            Panel.CLIPBOARD -> renderClipboardPanel(root)
+            Panel.GIFS -> {
+                root.addView(TextView(this).apply {
+                    text = "Your saved GIF triggers stay in Mohxify Actions. GIF suggestions and direct insertion are the next integration step."
+                    textSize = 13f
+                    setTextColor(Color.rgb(220, 214, 235))
+                    setPadding(dp(12), dp(12), dp(12), dp(12))
+                })
+                addRow(root, listOf("ABC"))
+            }
         }
+    }
+
+    private fun renderClipboardPanel(root: LinearLayout) {
+        root.addView(toolButton("Save current clipboard") { saveCurrentClipboard(); refreshKeyboard(root) },
+            LinearLayout.LayoutParams(-1, dp(42)))
+        val items = clipboardHistory()
+        if (items.isEmpty()) {
+            root.addView(TextView(this).apply {
+                text = "No saved clipboard items yet. Tap “Save current clipboard” to save the text currently on your clipboard."
+                textSize = 13f
+                setTextColor(Color.rgb(220, 214, 235))
+                setPadding(dp(12), dp(10), dp(12), dp(10))
+            })
+        } else {
+            items.take(5).forEach { value ->
+                val row = LinearLayout(this).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    gravity = Gravity.CENTER_VERTICAL
+                }
+                row.addView(toolButton(value.take(26)) {
+                    currentInputConnection?.commitText(value, 1)
+                    panel = Panel.KEYS
+                    refreshKeyboard(root)
+                }, LinearLayout.LayoutParams(0, dp(42), 1f))
+                row.addView(toolButton("×") {
+                    saveClipboardHistory(clipboardHistory().filterNot { it == value })
+                    refreshKeyboard(root)
+                })
+                root.addView(row, LinearLayout.LayoutParams(-1, dp(44)))
+            }
+            root.addView(toolButton("Clear history") { saveClipboardHistory(emptyList()); refreshKeyboard(root) },
+                LinearLayout.LayoutParams(-1, dp(40)))
+        }
+        addRow(root, listOf("ABC"))
+    }
+
+    private fun saveCurrentClipboard() {
+        val manager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = manager.primaryClip
+        if (clip == null || clip.itemCount == 0) return
+        val value = clip.getItemAt(0).coerceToText(this)?.toString()?.trim().orEmpty()
+        if (value.isBlank()) return
+        saveClipboardHistory((listOf(value) + clipboardHistory().filterNot { it == value }).take(10))
+    }
+
+    private fun clipboardHistory(): List<String> {
+        val raw = getSharedPreferences("mohxify_keyboard_clipboard", Context.MODE_PRIVATE)
+            .getString("history", "[]") ?: "[]"
+        return try {
+            val json = JSONArray(raw)
+            (0 until json.length()).mapNotNull { json.optString(it).takeIf(String::isNotBlank) }
+        } catch (_: Exception) { emptyList() }
+    }
+
+    private fun saveClipboardHistory(values: List<String>) {
+        val json = JSONArray()
+        values.take(10).forEach(json::put)
+        getSharedPreferences("mohxify_keyboard_clipboard", Context.MODE_PRIVATE)
+            .edit().putString("history", json.toString()).apply()
+    }
+
+    private fun toolButton(label: String, action: () -> Unit) = Button(this).apply {
+        text = label
+        textSize = 12f
+        isAllCaps = false
+        setTextColor(Color.rgb(250, 247, 255))
+        background = keyBackground(label)
+        minWidth = 0
+        minimumWidth = 0
+        minHeight = 0
+        minimumHeight = 0
+        stateListAnimator = null
+        setOnClickListener { action() }
     }
 
     private fun addRow(root: LinearLayout, keys: List<String>) {
@@ -107,23 +213,33 @@ class MohxifyKeyboardService : InputMethodService() {
 
     private fun keyBackground(key: String) = GradientDrawable().apply {
         cornerRadius = dp(6).toFloat()
-        setColor(if (key in listOf("⇧","⌫","?123","ABC","↵")) Color.rgb(77, 72, 94) else Color.rgb(57, 55, 68))
+        setColor(if (key in listOf("⇧","⌫","?123","ABC","↵","GIF","▤","☺")) Color.rgb(77, 72, 94) else Color.rgb(57, 55, 68))
     }
 
     private fun handleKey(key: String) {
         val connection = currentInputConnection ?: return
         when (key) {
-            "⇧" -> { shifted = !shifted; keyboardRoot?.let { refreshKeyboard(it) } }
-            "?123" -> { symbols = true; keyboardRoot?.let { refreshKeyboard(it) } }
-            "ABC" -> { symbols = false; keyboardRoot?.let { refreshKeyboard(it) } }
+            "ABC" -> { panel = Panel.KEYS; symbols = false; refreshKeyboard(keyboardRoot ?: return) }
+            "⇧" -> {
+                if (shifted && !capsLock) capsLock = true
+                else if (capsLock) { capsLock = false; shifted = false }
+                else shifted = true
+                keyboardRoot?.let { refreshKeyboard(it) }
+            }
+            "?123" -> { symbols = true; refreshKeyboard(keyboardRoot ?: return) }
             "⌫" -> deleteBeforeCursor(connection)
-            "space" -> { connection.commitText(" ", 1); shifted = false; keyboardRoot?.let { refreshKeyboard(it) } }
+            "space" -> {
+                connection.commitText(" ", 1)
+                if (!capsLock) shifted = false
+                keyboardRoot?.let { refreshKeyboard(it) }
+            }
             "↵" -> sendEnter(connection)
-            "☺" -> android.widget.Toast.makeText(this, "Emoji panel is coming in the next keyboard stage.", android.widget.Toast.LENGTH_SHORT).show()
+            "☺" -> { panel = Panel.EMOJI; keyboardRoot?.let { refreshKeyboard(it) } }
             else -> {
-                val output = if (!symbols && shifted) key.uppercase() else key
+                val output = if (panel == Panel.EMOJI) key else if (!symbols && shifted) key.uppercase() else key
                 connection.commitText(output, 1)
-                if (shifted) { shifted = false; keyboardRoot?.let { refreshKeyboard(it) } }
+                if (panel == Panel.EMOJI) { panel = Panel.KEYS; keyboardRoot?.let { refreshKeyboard(it) } }
+                else if (shifted && !capsLock) { shifted = false; keyboardRoot?.let { refreshKeyboard(it) } }
             }
         }
     }
@@ -137,8 +253,7 @@ class MohxifyKeyboardService : InputMethodService() {
         val before = connection.getTextBeforeCursor(2, 0) ?: return
         if (before.isEmpty()) return
         val last = Character.codePointBefore(before, before.length)
-        val count = Character.charCount(last)
-        connection.deleteSurroundingText(count, 0)
+        connection.deleteSurroundingText(Character.charCount(last), 0)
     }
 
     private fun sendEnter(connection: InputConnection) {
@@ -147,7 +262,7 @@ class MohxifyKeyboardService : InputMethodService() {
         if (action != EditorInfo.IME_ACTION_NONE && action != EditorInfo.IME_ACTION_UNSPECIFIED) {
             connection.performEditorAction(action)
         } else {
-            connection.commitText("\n", 1)
+            connection.commitText("\\n", 1)
         }
     }
 
