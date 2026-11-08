@@ -40,6 +40,10 @@ class MohxifyAccessibilityService : AccessibilityService() {
             when {
                 packageName == "com.whatsapp" -> updateActionBubble(packageName)
                 packageName.isNullOrBlank() -> Unit
+                // Opening Mohxify's own action screen must not destroy the WhatsApp
+                // overlay. Keeping the same View also avoids remove/add flicker when
+                // the user returns to WhatsApp.
+                packageName == this@MohxifyAccessibilityService.packageName -> Unit
                 isCurrentInputMethod(packageName) -> Unit
                 else -> updateActionBubble(packageName)
             }
