@@ -54,7 +54,7 @@ class MohxifyKeyboardService : InputMethodService() {
             setPadding(0, dp(5), 0, dp(3))
         })
         root.addView(TextView(this).apply {
-            text = "Choose one of your saved Mohxify actions. This is a command pad, not a typing keyboard."
+            text = "Choose a text replacement or run a saved GIF action. This is a command pad, not a typing keyboard."
             textSize = 12f
             setTextColor(Color.rgb(180, 174, 198))
         })
