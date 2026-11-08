@@ -66,6 +66,7 @@ class MohxifyKeyboardService : InputMethodService() {
         val before = connection.getTextBeforeCursor(180, 0)?.toString() ?: return
         val match = Regex("(^|\\s)(,[A-Za-z0-9_-]+)\\s$").find(before) ?: return
         val typedShortcut = match.groupValues[2]
+        val shortcutWithSeparator = typedShortcut + " "
         val normalized = typedShortcut.drop(1).replace("_", "").replace("-", "")
         val action = GifActionStore.all(this).firstOrNull {
             it.trigger.trim().replace(Regex("\\s+"), "").replace("_", "").replace("-", "")
@@ -74,8 +75,8 @@ class MohxifyKeyboardService : InputMethodService() {
 
         handlingTrigger = true
         try {
-            if (connection.deleteSurroundingText(match.value.length, 0)) {
-                if (!insertGif(action.uri)) connection.commitText(match.value, 1)
+            if (connection.deleteSurroundingText(shortcutWithSeparator.length, 0)) {
+                if (!insertGif(action.uri)) connection.commitText(shortcutWithSeparator, 1)
             }
         } finally {
             handlingTrigger = false
