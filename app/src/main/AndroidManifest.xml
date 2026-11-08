@@ -27,6 +27,18 @@
             android:exported="false"
             android:label="Mohxify Actions" />
         <service
+            android:name=".MohxifyKeyboardService"
+            android:label="Mohxify Keyboard"
+            android:permission="android.permission.BIND_INPUT_METHOD"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.view.InputMethod" />
+            </intent-filter>
+            <meta-data
+                android:name="android.view.im"
+                android:resource="@xml/mohxify_keyboard_method" />
+        </service>
+        <service
             android:name=".MohxifyAccessibilityService"
             android:label="Mohxify text replacement and WhatsApp actions"
             android:icon="@drawable/ic_mohxify_launcher"
