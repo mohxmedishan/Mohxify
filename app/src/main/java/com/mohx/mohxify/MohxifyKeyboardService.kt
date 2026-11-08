@@ -375,7 +375,7 @@ class MohxifyKeyboardService : InputMethodService() {
         if (action != EditorInfo.IME_ACTION_NONE && action != EditorInfo.IME_ACTION_UNSPECIFIED) {
             connection.performEditorAction(action)
         } else {
-            connection.commitText("\\n", 1)
+            connection.commitText("\n", 1)
         }
     }
 
