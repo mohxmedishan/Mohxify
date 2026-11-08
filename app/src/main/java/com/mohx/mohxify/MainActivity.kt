@@ -164,6 +164,14 @@ class MainActivity : Activity() {
         }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46)).apply {
             topMargin = dp(8)
         })
+        hero.addView(button("Set up Mohxify Keyboard  →") {
+            startActivity(Intent(this@MainActivity, KeyboardSetupActivity::class.java))
+        }.apply {
+            background = rounded(0xFF6D4BC3.toInt(), 14)
+            setTextColor(0xFFFFFFFF.toInt())
+        }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46)).apply {
+            topMargin = dp(8)
+        })
         hero.addView(TextView(this).apply {
             text = "Works in supported editable fields. Password fields are skipped; some apps use custom editors."
             textSize = 11f; setTextColor(0xFFAAA0C0.toInt()); setPadding(dp(2), dp(12), dp(2), 0)
