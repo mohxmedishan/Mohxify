@@ -170,6 +170,19 @@ class MainActivity : Activity() {
         })
         content.addView(hero)
 
+        val gifCard = panel()
+        addSectionHeading(gifCard, "GIF ACTIONS", "Save keyboard GIFs to reusable triggers")
+        gifCard.addView(TextView(this).apply {
+            text = "Import a GIF directly from Gboard, assign a phrase, and manage your saved WhatsApp GIF actions."
+            textSize = 12f; setTextColor(0xFFAAA4BC.toInt())
+        }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+            bottomMargin = dp(12)
+        })
+        gifCard.addView(button("Open GIF Actions  →") {
+            startActivity(Intent(this@MainActivity, MohxifyActionsActivity::class.java))
+        }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(50)))
+        content.addView(gifCard)
+
         val loadoutCard = panel()
         addSectionHeading(loadoutCard, "YOUR WORKSPACES", "Switch your vocabulary")
         loadoutSpinner = Spinner(this).apply {
