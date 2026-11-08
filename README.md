@@ -60,7 +60,7 @@ The app's debug build now uses Gradle's local debug signing identity. Public rel
 3. Run **Build signed Mohxify release** from Actions.
 4. Verify the APK installs and works on your test device before announcing it.
 
-**Important update warning:** a build signed with Gradle's local debug key or a new private release key cannot update an existing installation signed with the exposed legacy key. Export all loadouts before switching signing identities. Users may need to uninstall the old app once, install the new build, and restore their dictionaries. Test this migration before announcing it.
+**Important update warning:** debug APKs and signed release APKs use different signing certificates, so Android will not let a signed release update a debug installation in place. For the one-time switch, export all loadouts to a JSON backup, uninstall the debug build, install the latest signed release APK, and restore the backup. Existing installations signed with the exposed legacy key may also need this migration. After the app is on the private release signing key, future signed releases can update in place.
 
 Never share the new keystore or its passwords in chat, issues, commits, or screenshots.
 
