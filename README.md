@@ -28,6 +28,10 @@ The current implementation uses Android's `ACTION_SEND` media-sharing flow. What
 
 GIF mappings and selected document URIs are stored locally. Mohxify does not upload GIFs or trigger text.
 
+## Desktop apps
+
+A separate Windows and macOS desktop application is being developed in [desktop/](desktop/). It uses Tauri 2 and keeps its rules and loadouts locally on the device. See [docs/DESKTOP.md](docs/DESKTOP.md) for setup and build instructions. Android remains the existing Kotlin app and its APK workflow is unchanged.
+
 ## Build
 
 The project uses Android Gradle Plugin 8.7.3, Kotlin 2.0.21, Java 17, and compile SDK 35.
