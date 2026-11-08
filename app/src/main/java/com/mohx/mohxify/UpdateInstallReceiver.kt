@@ -20,7 +20,15 @@ class UpdateInstallReceiver : BroadcastReceiver() {
             else -> {
                 val message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
                     ?: "Android could not install this update"
-                Toast.makeText(context, "Update failed: $message", Toast.LENGTH_LONG).show()
+                val userMessage = if (
+                    message.contains("UPDATE_INCOMPATIBLE", ignoreCase = true) ||
+                    message.contains("signature", ignoreCase = true)
+                ) {
+                    "Signing key mismatch. Back up your loadouts, reinstall the signed release, then restore the backup."
+                } else {
+                    "Update failed: $message"
+                }
+                Toast.makeText(context, userMessage, Toast.LENGTH_LONG).show()
             }
         }
     }
