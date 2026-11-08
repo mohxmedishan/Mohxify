@@ -19,7 +19,7 @@ android {
         }
         create("privateRelease") {
             val keyPath = System.getenv("MOHXIFY_KEYSTORE_PATH")
-            storeFile = if (keyPath.isNullOrBlank()) file("missing-release-key.jks") else file(keyPath)
+            storeFile = if (keyPath.isNullOrBlank()) file("missing-release-key.jks") else rootProject.file(keyPath)
             storePassword = System.getenv("MOHXIFY_STORE_PASSWORD") ?: ""
             keyAlias = System.getenv("MOHXIFY_KEY_ALIAS") ?: ""
             keyPassword = System.getenv("MOHXIFY_KEY_PASSWORD") ?: ""
