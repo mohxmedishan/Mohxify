@@ -98,8 +98,6 @@ class MohxifyAccessibilityService : AccessibilityService() {
             if (tokenStart == separatorIndex) return
 
             val token = current.substring(tokenStart, separatorIndex)
-            // Comma-prefixed GIF shortcuts belong to the keyboard, not dictionary replacement.
-            if (token.startsWith(",")) return
             var coreStart = 0
             var coreEnd = token.length
             while (coreStart < coreEnd && !token[coreStart].isLetterOrDigit()) coreStart++
