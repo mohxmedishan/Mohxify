@@ -32,7 +32,7 @@ android {
         targetSdk = 35
         val runNumber = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
         versionCode = runNumber
-        versionName = "1.$runNumber"
+        versionName = "2.0.$runNumber"
     }
 
     buildTypes {
