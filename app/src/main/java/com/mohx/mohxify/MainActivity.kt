@@ -22,6 +22,7 @@ import android.widget.*
 
 class MainActivity : Activity() {
     private lateinit var status: TextView
+    private lateinit var serviceStatus: TextView
     private lateinit var serviceButton: Button
     private lateinit var loadoutSpinner: Spinner
     private lateinit var list: LinearLayout
@@ -114,17 +115,20 @@ class MainActivity : Activity() {
             textSize = 13f; setTextColor(0xFFC6BED7.toInt())
         })
         status = TextView(this).apply {
-            textSize = 12f; typeface = Typeface.DEFAULT_BOLD; setTextColor(0xFFE6D9FF.toInt())
-            setPadding(dp(11), dp(7), dp(11), dp(7)); background = rounded(0xFF30214E.toInt(), 30)
+            textSize = 11f; typeface = Typeface.DEFAULT_BOLD; setTextColor(0xFFE6D9FF.toInt())
+            setPadding(dp(12), dp(8), dp(12), dp(8)); background = rounded(0xFF30214E.toInt(), 30)
+        }
+        serviceStatus = TextView(this).apply {
+            textSize = 9f; letterSpacing = .04f; typeface = Typeface.DEFAULT_BOLD
+            setTextColor(0xFFBBA4FF.toInt()); gravity = Gravity.CENTER
+            setPadding(dp(10), dp(8), dp(10), dp(8)); background = rounded(0xFF211D31.toInt(), 30)
         }
         val statusRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
             setPadding(0, dp(15), 0, dp(10))
-            addView(status, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-            addView(TextView(this@MainActivity).apply {
-                text = "LOCAL · OFFLINE"; textSize = 9f; letterSpacing = .08f
-                typeface = Typeface.DEFAULT_BOLD; setTextColor(0xFF9D91B9.toInt())
-            })
+            addView(status, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            addView(View(this@MainActivity), LinearLayout.LayoutParams(0, 1, 1f))
+            addView(serviceStatus)
         }
         hero.addView(statusRow)
         masterToggle = button("Turn Mohxify on") {
@@ -136,6 +140,12 @@ class MainActivity : Activity() {
         }.apply { background = rounded(0xFF2A2440.toInt(), 15); setTextColor(0xFFE7DDFF.toInt()) }
         hero.addView(serviceButton, LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, dp(48)).apply { topMargin = dp(9) })
+        hero.addView(button("How to use Mohxify  →") { showHowToUse() }.apply {
+            background = rounded(0xFF29243B.toInt(), 14)
+            setTextColor(0xFFE8DDFF.toInt())
+        }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46)).apply {
+            topMargin = dp(8)
+        })
         hero.addView(TextView(this).apply {
             text = "Works in supported editable fields. Password fields are skipped; some apps use custom editors."
             textSize = 11f; setTextColor(0xFFAAA0C0.toInt()); setPadding(dp(2), dp(12), dp(2), 0)
@@ -144,16 +154,29 @@ class MainActivity : Activity() {
 
         val loadoutCard = panel()
         addSectionHeading(loadoutCard, "YOUR WORKSPACES", "Switch your vocabulary")
-        val selector = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
-        loadoutSpinner = Spinner(this).apply { minimumHeight = dp(48); background = rounded(0xFF24243A.toInt(), 13) }
-        selector.addView(loadoutSpinner, LinearLayout.LayoutParams(0, dp(50), 1f))
-        renameButton = compactButton("✎") { renameActiveLoadout() }.apply { contentDescription = "Rename selected loadout" }
-        selector.addView(renameButton, iconParams())
-        deleteButton = compactButton("×") { deleteActiveLoadout() }.apply { contentDescription = "Delete selected loadout" }
-        selector.addView(deleteButton, iconParams())
-        selector.addView(compactButton("⧉") { duplicateActiveLoadout() }, iconParams())
-        selector.addView(compactButton("+") { createLoadout() }, iconParams())
-        loadoutCard.addView(selector)
+        loadoutSpinner = Spinner(this).apply {
+            minimumHeight = dp(50); background = rounded(0xFF24243A.toInt(), 13)
+            setPadding(dp(8), 0, dp(8), 0)
+        }
+        loadoutCard.addView(loadoutSpinner, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, dp(50)))
+        val workspaceActions = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, dp(8), 0, 0)
+        }
+        renameButton = compactButton("Edit") { renameActiveLoadout() }.apply {
+            contentDescription = "Rename selected workspace"
+        }
+        deleteButton = compactButton("Delete") { deleteActiveLoadout() }.apply {
+            contentDescription = "Delete selected workspace"
+        }
+        workspaceActions.addView(renameButton, LinearLayout.LayoutParams(0, dp(42), 1f).apply { rightMargin = dp(4) })
+        workspaceActions.addView(deleteButton, LinearLayout.LayoutParams(0, dp(42), 1f).apply { leftMargin = dp(4); rightMargin = dp(4) })
+        workspaceActions.addView(compactButton("Copy") { duplicateActiveLoadout() },
+            LinearLayout.LayoutParams(0, dp(42), 1f).apply { leftMargin = dp(4); rightMargin = dp(4) })
+        workspaceActions.addView(compactButton("+ New") { createLoadout() },
+            LinearLayout.LayoutParams(0, dp(42), 1f).apply { leftMargin = dp(4) })
+        loadoutCard.addView(workspaceActions)
         content.addView(loadoutCard)
 
         val rulesCard = panel()
@@ -191,6 +214,12 @@ class MainActivity : Activity() {
         ruleActions.addView(button("Import rules") { showImportDialog() },
             LinearLayout.LayoutParams(0, dp(50), 1f).apply { leftMargin = dp(5) })
         rulesCard.addView(ruleActions)
+        rulesCard.addView(button("Try a shortcut  ↗") { showRuleTester() }.apply {
+            background = rounded(0xFF29243B.toInt(), 14)
+            setTextColor(0xFFE8DDFF.toInt())
+        }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(44)).apply {
+            topMargin = dp(7)
+        })
         content.addView(rulesCard)
 
         val dataCard = panel()
@@ -219,7 +248,7 @@ class MainActivity : Activity() {
     private fun panel(color: Int = 0xFF151625.toInt(), radius: Int = 22) =
         LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(15), dp(16), dp(15), dp(16))
+            setPadding(dp(13), dp(13), dp(13), dp(13))
             background = GradientDrawable().apply {
                 setColor(color); cornerRadius = dp(radius).toFloat(); setStroke(dp(1), 0xFF302B43.toInt())
             }
@@ -252,9 +281,9 @@ class MainActivity : Activity() {
 
     private fun compactButton(label: String, action: () -> Unit) = Button(this).apply {
         text = label
-        textSize = if (label == "+") 23f else 21f
+        textSize = if (label.length > 3) 10f else if (label == "+") 23f else 21f
         isAllCaps = false
-        minWidth = dp(42)
+        minWidth = dp(0)
         setTextColor(0xFFE8DDFF.toInt())
         background = rounded(0xFF29263B.toInt(), 14)
         setOnClickListener { action() }
@@ -274,14 +303,30 @@ class MainActivity : Activity() {
         val items = LoadoutStore.all(this)
         val active = LoadoutStore.active(this)
         val enabled = LoadoutStore.enabled(this)
-        status.text = "Status: " + if (enabled) "ON" else "OFF"
+        status.text = "REPLACEMENT " + if (enabled) "ON" else "OFF"
 
         masterToggle.text = if (enabled) "Turn Mohxify off" else "Turn Mohxify on"
 
         val accessibilityEnabled = isMohxifyAccessibilityEnabled()
+        serviceStatus.text = if (accessibilityEnabled) "SERVICE READY" else "SETUP NEEDED"
+        serviceStatus.setTextColor(if (accessibilityEnabled) 0xFFC5F36B.toInt() else 0xFFFFC078.toInt())
         serviceButton.visibility = if (accessibilityEnabled) View.GONE else View.VISIBLE
 
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, items.map { it.name })
+        val adapter = object : ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, items.map { it.name }) {
+            private fun style(view: View): View {
+                (view as? TextView)?.apply {
+                    textSize = 14f; typeface = Typeface.DEFAULT_BOLD
+                    setTextColor(0xFFF4F0FF.toInt()); setPadding(dp(12), dp(8), dp(8), dp(8))
+                }
+                return view
+            }
+            override fun getView(position: Int, convertView: View?, parent: ViewGroup): View =
+                style(super.getView(position, convertView, parent))
+            override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup): View =
+                style(super.getDropDownView(position, convertView, parent)).apply {
+                    setBackgroundColor(0xFF24243A.toInt())
+                }
+        }
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         loadoutSpinner.adapter = adapter
         val selected = items.indexOfFirst { it.id == active.id }.coerceAtLeast(0)
@@ -386,6 +431,91 @@ class MainActivity : Activity() {
             } else 10
             refresh()
         }
+    }
+
+    private fun showRuleTester() {
+        val input = EditText(this).apply {
+            hint = "Type a trigger word, e.g. what"
+            setSingleLine(true)
+            textSize = 15f
+            setTextColor(0xFFF7F3FF.toInt())
+            setHintTextColor(0xFF89839B.toInt())
+            inputType = InputType.TYPE_CLASS_TEXT
+            background = rounded(0xFF24243A.toInt(), 14)
+            setPadding(dp(14), dp(10), dp(14), dp(10))
+        }
+        val result = TextView(this).apply {
+            text = "Your replacement preview will appear here."
+            textSize = 14f
+            setTextColor(0xFFC7B4FF.toInt())
+            setPadding(dp(2), dp(14), dp(2), dp(4))
+        }
+        val alternatives = TextView(this).apply {
+            textSize = 12f
+            setTextColor(0xFFAAA4BC.toInt())
+        }
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(18), dp(8), dp(18), dp(8))
+            addView(input)
+            addView(result)
+            addView(alternatives)
+        }
+        input.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                val word = s?.toString()?.trim().orEmpty()
+                val matches = if (word.isBlank() || word.any { it.isWhitespace() }) emptyList()
+                    else ReplacementEngine.alternatives(word, LoadoutStore.active(this@MainActivity).rules)
+                result.text = when {
+                    word.isBlank() -> "Your replacement preview will appear here."
+                    word.any { it.isWhitespace() } -> "Enter one trigger word at a time."
+                    matches.isEmpty() -> "No matching rule in this workspace."
+                    else -> "$word  →  ${matches.first()}"
+                }
+                alternatives.text = if (matches.size > 1) "Other alternatives: ${matches.drop(1).joinToString("  ·  ")}" else ""
+            }
+            override fun afterTextChanged(s: Editable?) = Unit
+        })
+        AlertDialog.Builder(this)
+            .setTitle("Try a shortcut")
+            .setMessage("Test the active workspace without typing in another app.")
+            .setView(content)
+            .setPositiveButton("Done", null)
+            .show()
+    }
+
+    private fun showHowToUse() {
+        val guide = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(18), dp(8), dp(18), dp(12))
+        }
+        fun section(title: String, body: String) {
+            guide.addView(TextView(this).apply {
+                text = title; textSize = 15f; typeface = Typeface.DEFAULT_BOLD
+                setTextColor(0xFFF5F0FF.toInt()); setPadding(0, dp(12), 0, dp(4))
+            })
+            guide.addView(TextView(this).apply {
+                text = body; textSize = 13f; setTextColor(0xFFC2BCD2.toInt())
+                setLineSpacing(dp(3).toFloat(), 1f)
+            })
+        }
+        section("1. Turn it on", "Open Android Accessibility settings, find Mohxify under installed or downloaded apps, and allow the service. Return to Mohxify and switch the main toggle on. Both steps are needed.")
+        section("2. Create a shortcut", "Tap + Add replacement. Enter the word you will type as the trigger, then enter what it should become. Example: what → wt, because → bcs. Save the rule.")
+        section("3. Use it while typing", "Open a supported text field in any app with your usual keyboard. Type the trigger as a complete word, then press Space. Example: type “what ” and Mohxify changes it to “wt ”. Keep typing normally.")
+        section("4. Cycle alternatives", "Give one trigger more than one replacement, such as hello → hey and hello → hi. After the first replacement, press Backspace once to move to the next alternative. This only works immediately after the replacement and its generated space.")
+        section("5. Keep different vocabularies", "Create separate workspaces for school, casual chat, gaming or anything else. Select a workspace to activate its dictionary. Edit, copy or delete workspaces from the buttons below the selector.")
+        section("6. Import and back up", "Use Import rules to paste or load a text file. The format is one rule per line: what: wt. Review the preview before merging or replacing. Use Back up all loadouts to save a JSON backup before reinstalling or changing devices.")
+        section("Good to know", "Mohxify works only in supported editable text fields. Password fields are skipped, and some apps use custom editors that Android does not expose. Your dictionaries are stored locally on this device. The Accessibility service is what lets Mohxify detect completed words.")
+        val scroll = ScrollView(this).apply {
+            addView(guide)
+            isFillViewport = true
+        }
+        AlertDialog.Builder(this)
+            .setTitle("How to use Mohxify")
+            .setView(scroll)
+            .setPositiveButton("Got it", null)
+            .show()
     }
 
     private fun isMohxifyAccessibilityEnabled(): Boolean {
