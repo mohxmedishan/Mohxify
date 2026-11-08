@@ -40,7 +40,7 @@
         </service>
         <service
             android:name=".MohxifyAccessibilityService"
-            android:label="Mohxify text replacement and WhatsApp actions"
+            android:label="Mohxify automatic text replacement"
             android:icon="@drawable/ic_mohxify_launcher"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:exported="false">
