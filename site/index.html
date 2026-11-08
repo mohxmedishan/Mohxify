@@ -68,4 +68,24 @@ const published=release.published_at||release.created_at;if(published)version.te
 download.href=apk.browser_download_url;download.querySelector("span").textContent="Download "+apk.name;download.setAttribute("aria-label","Download "+apk.name);document.getElementById("release").href=release.html_url||fallback;
 }catch(error){version.textContent="Latest APK on GitHub";document.getElementById("error").style.display="block";download.href=fallback;}}
 loadLatestRelease();
+
+const menuToggle = document.getElementById("mobile-menu-toggle");
+const mobileMenu = document.getElementById("mobile-menu");
+
+if (menuToggle && mobileMenu) {
+  menuToggle.addEventListener("click", () => {
+    const isOpen = menuToggle.getAttribute("aria-expanded") === "true";
+    menuToggle.setAttribute("aria-expanded", String(!isOpen));
+    menuToggle.setAttribute("aria-label", isOpen ? "Open navigation" : "Close navigation");
+    mobileMenu.classList.toggle("open", !isOpen);
+  });
+
+  mobileMenu.querySelectorAll("a").forEach(link => {
+    link.addEventListener("click", () => {
+      menuToggle.setAttribute("aria-expanded", "false");
+      menuToggle.setAttribute("aria-label", "Open navigation");
+      mobileMenu.classList.remove("open");
+    });
+  });
+}
 </script></body></html>
