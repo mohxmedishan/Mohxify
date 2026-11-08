@@ -1,22 +1,12 @@
 package com.mohx.mohxify
 
 import android.accessibilityservice.AccessibilityService
-import android.content.Intent
-import android.graphics.PixelFormat
-import android.graphics.Typeface
-import android.graphics.drawable.GradientDrawable
-import android.provider.Settings
-import android.view.Gravity
-import android.view.View
-import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
-import android.widget.TextView
 
 class MohxifyAccessibilityService : AccessibilityService() {
     private var editing = false
     private var expectedReplacementText: String? = null
-    private var actionBubble: View? = null
 
     private data class LastReplacement(
         val windowId: Int,
@@ -35,16 +25,6 @@ class MohxifyAccessibilityService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
-        if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
-            val packageName = event.packageName?.toString()
-            when {
-                packageName == "com.whatsapp" -> updateActionBubble(packageName)
-                packageName.isNullOrBlank() -> Unit
-                isCurrentInputMethod(packageName) -> Unit
-                else -> updateActionBubble(packageName)
-            }
-            return
-        }
         if (editing || event.eventType != AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED) return
         if (!LoadoutStore.enabled(this)) {
             lastReplacement = null
@@ -154,64 +134,6 @@ class MohxifyAccessibilityService : AccessibilityService() {
         }
     }
 
-    private fun isCurrentInputMethod(packageName: String): Boolean {
-        val currentInputMethod = Settings.Secure.getString(
-            contentResolver,
-            Settings.Secure.DEFAULT_INPUT_METHOD
-        ) ?: return false
-        return currentInputMethod.substringBefore('/') == packageName
-    }
-
-    private fun updateActionBubble(packageName: String?) {
-        if (packageName == "com.whatsapp") {
-            if (actionBubble != null) return
-            val bubble = TextView(this).apply {
-                text = "GIF"
-                textSize = 12f
-                typeface = Typeface.DEFAULT_BOLD
-                gravity = Gravity.CENTER
-                setTextColor(0xFFFFFFFF.toInt())
-                contentDescription = "Open Mohxify WhatsApp GIF actions"
-                background = GradientDrawable(
-                    GradientDrawable.Orientation.TL_BR,
-                    intArrayOf(0xFF8B5CF6.toInt(), 0xFF5B3AA8.toInt())
-                ).apply { shape = GradientDrawable.OVAL }
-                elevation = dp(8).toFloat()
-                setOnClickListener {
-                    val launch = Intent(this@MohxifyAccessibilityService, MohxifyActionsActivity::class.java)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    startActivity(launch)
-                }
-            }
-            val params = WindowManager.LayoutParams(
-                dp(52), dp(52),
-                WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
-                PixelFormat.TRANSLUCENT
-            ).apply {
-                gravity = Gravity.END or Gravity.CENTER_VERTICAL
-                x = dp(8)
-                y = dp(52)
-            }
-            try {
-                (getSystemService(WINDOW_SERVICE) as WindowManager).addView(bubble, params)
-                actionBubble = bubble
-            } catch (_: Exception) { actionBubble = null }
-        } else {
-            removeActionBubble()
-        }
-    }
-
-    private fun removeActionBubble() {
-        val bubble = actionBubble ?: return
-        try { (getSystemService(WINDOW_SERVICE) as WindowManager).removeView(bubble) }
-        catch (_: Exception) { }
-        actionBubble = null
-    }
-
-    private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
-
     private fun setTextAndCursor(node: AccessibilityNodeInfo, text: String, cursor: Int): Boolean {
         editing = true
         return try {
@@ -233,11 +155,9 @@ class MohxifyAccessibilityService : AccessibilityService() {
         lastReplacement = null
         suppressedReentry = null
         expectedReplacementText = null
-        removeActionBubble()
     }
 
     override fun onDestroy() {
-        removeActionBubble()
         super.onDestroy()
     }
 }

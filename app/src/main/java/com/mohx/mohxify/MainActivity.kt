@@ -129,7 +129,7 @@ class MainActivity : Activity() {
             setTextColor(0xFFFFFFFF.toInt()); setPadding(0, dp(9), 0, dp(7))
         })
         hero.addView(TextView(this).apply {
-            text = "Fast shortcuts, personal dictionaries, zero keyboard switching."
+            text = "Personal text rules and a dedicated command pad."
             textSize = 13f; setTextColor(0xFFC6BED7.toInt())
         })
         status = TextView(this).apply {
@@ -164,6 +164,14 @@ class MainActivity : Activity() {
         }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46)).apply {
             topMargin = dp(8)
         })
+        hero.addView(button("Set up Mohxify Keyboard  →") {
+            startActivity(Intent(this@MainActivity, KeyboardSetupActivity::class.java))
+        }.apply {
+            background = rounded(0xFF6D4BC3.toInt(), 14)
+            setTextColor(0xFFFFFFFF.toInt())
+        }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46)).apply {
+            topMargin = dp(8)
+        })
         hero.addView(TextView(this).apply {
             text = "Works in supported editable fields. Password fields are skipped; some apps use custom editors."
             textSize = 11f; setTextColor(0xFFAAA0C0.toInt()); setPadding(dp(2), dp(12), dp(2), 0)
@@ -173,7 +181,7 @@ class MainActivity : Activity() {
         val gifCard = panel()
         addSectionHeading(gifCard, "GIF ACTIONS", "Save keyboard GIFs to reusable triggers")
         gifCard.addView(TextView(this).apply {
-            text = "Import a GIF directly from Gboard, assign a phrase, and manage your saved WhatsApp GIF actions."
+            text = "Import GIFs, assign trigger phrases, and manage saved actions for the Mohxify command pad."
             textSize = 12f; setTextColor(0xFFAAA4BC.toInt())
         }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
             bottomMargin = dp(12)
