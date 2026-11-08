@@ -38,7 +38,7 @@ class KeyboardSetupActivity : Activity() {
             setPadding(0, dp(8), 0, dp(8))
         })
         root.addView(TextView(this).apply {
-            text = "Enable Mohxify Keyboard in Android settings, then choose it from the keyboard switcher inside a text field. Use it to insert replacements from your active loadout or run saved GIF trigger actions."
+            text = "Enable Mohxify Keyboard in Android settings, then choose it from the keyboard switcher inside a text field. Type normally with its letter, number, symbol, space, backspace and enter keys. Saved GIF triggers appear in the strip above the keys."
             textSize = 14f
             setTextColor(Color.rgb(196, 190, 213))
             setLineSpacing(dp(3).toFloat(), 1f)
@@ -55,7 +55,7 @@ class KeyboardSetupActivity : Activity() {
             }
         }, LinearLayout.LayoutParams(-1, dp(50)).apply { topMargin = dp(10) })
         root.addView(TextView(this).apply {
-            text = "Mohxify Keyboard is a command pad for your saved trigger actions, not a general-purpose typing keyboard. Add and manage GIF triggers in the Mohxify GIF screen, then run them here."
+            text = "Mohxify Keyboard is a full typing keyboard with a compact GIF-trigger strip. Automatic text replacement continues working while you type; GIF triggers insert supported GIF content into the focused chat."
             textSize = 12f
             setTextColor(Color.rgb(170, 164, 188))
             setPadding(0, dp(20), 0, 0)

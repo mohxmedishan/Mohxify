@@ -1,213 +1,213 @@
 package com.mohx.mohxify
 
-import android.content.Intent
+import android.content.ClipDescription
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.inputmethodservice.InputMethodService
 import android.net.Uri
-import android.view.Gravity
+import android.os.Build
+import android.os.Bundle
 import android.text.InputType
+import android.view.Gravity
 import android.view.View
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputConnection
+import android.view.inputmethod.InputContentInfo
+import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 
-/**
- * Mohxify command pad, not a general-purpose typing keyboard.
- * Commands use the user's existing saved GIF actions and their trigger phrases.
- */
+/** Mohxify's typing keyboard with a compact row of saved GIF trigger actions. */
 class MohxifyKeyboardService : InputMethodService() {
+    private var caps = false
+    private var numbers = false
     private var rootView: LinearLayout? = null
-    private enum class CommandFilter { ALL, TEXT, GIFS }
-    private var commandFilter = CommandFilter.ALL
 
-    override fun onCreateInputView(): View = buildCommandPad().also { rootView = it }
+    override fun onCreateInputView(): View = buildKeyboard().also { rootView = it }
 
-    override fun onStartInput(attribute: android.view.inputmethod.EditorInfo?, restarting: Boolean) {
+    override fun onStartInput(attribute: EditorInfo?, restarting: Boolean) {
         super.onStartInput(attribute, restarting)
-        commandFilter = CommandFilter.ALL
+        caps = attribute?.let {
+            it.inputType and InputType.TYPE_TEXT_FLAG_CAP_SENTENCES != 0
+        } ?: false
         rootView?.let { render(it) }
     }
 
-    private fun buildCommandPad() = LinearLayout(this).apply {
+    override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
+        super.onStartInputView(info, restarting)
+        rootView?.let { render(it) }
+    }
+
+    private fun buildKeyboard() = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
-        setPadding(dp(12), dp(10), dp(12), dp(10))
+        setPadding(dp(5), dp(5), dp(5), dp(5))
         setBackgroundColor(Color.rgb(9, 10, 18))
         render(this)
     }
 
     private fun render(root: LinearLayout) {
         root.removeAllViews()
-        root.addView(TextView(this).apply {
-            text = "MOHXIFY  /  COMMANDS"
+        val toolbar = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        toolbar.addView(TextView(this).apply {
+            text = "MOHXIFY"
             textSize = 11f
             typeface = Typeface.DEFAULT_BOLD
             setTextColor(Color.rgb(190, 166, 255))
-            letterSpacing = 0.08f
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(5), 0, dp(7), 0)
         })
-        root.addView(TextView(this).apply {
-            text = "Run a trigger"
-            textSize = 23f
-            typeface = Typeface.DEFAULT_BOLD
-            setTextColor(Color.WHITE)
-            setPadding(0, dp(5), 0, dp(3))
-        })
-        root.addView(TextView(this).apply {
-            text = "Choose a text replacement or run a saved GIF action. This is a command pad, not a typing keyboard."
-            textSize = 12f
-            setTextColor(Color.rgb(180, 174, 198))
-        })
-
-        val tabs = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            setPadding(0, dp(12), 0, dp(8))
-        }
-        fun addFilter(label: String, filter: CommandFilter) {
-            tabs.addView(commandButton(label) {
-                commandFilter = filter
-                render(root)
-            }.apply {
-                background = rounded(
-                    if (commandFilter == filter) Color.rgb(91, 58, 168) else Color.rgb(36, 34, 54),
-                    11
-                )
-            }, LinearLayout.LayoutParams(0, dp(38), 1f).apply {
-                if (filter != CommandFilter.ALL) leftMargin = dp(6)
-            })
-        }
-        addFilter("All", CommandFilter.ALL)
-        addFilter("Text rules", CommandFilter.TEXT)
-        addFilter("GIF actions", CommandFilter.GIFS)
-        root.addView(tabs)
-
-        root.addView(TextView(this).apply {
-            text = when (commandFilter) { CommandFilter.ALL -> "ALL COMMANDS"; CommandFilter.TEXT -> "TEXT COMMANDS"; CommandFilter.GIFS -> "GIF COMMANDS" }
-            textSize = 10f
-            typeface = Typeface.DEFAULT_BOLD
-            setTextColor(Color.rgb(190, 166, 255))
-            setPadding(0, dp(3), 0, dp(7))
-        })
-        val list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        list.tag = "command_list"
-        root.addView(ScrollView(this).apply {
-            isFillViewport = false
-            addView(list, android.widget.FrameLayout.LayoutParams(-1, -2))
-        }, LinearLayout.LayoutParams(-1, 0, 1f))
-        renderActions(list)
-
-        root.addView(commandButton("Open Mohxify GIF screen") {
+        toolbar.addView(key("GIFs", accent = true) {
             try {
-                startActivity(Intent(this, MohxifyActionsActivity::class.java)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                startActivity(android.content.Intent(this, MohxifyActionsActivity::class.java)
+                    .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
             } catch (_: Exception) {
-                Toast.makeText(this, "Open Mohxify from your apps screen.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Open Mohxify to manage GIF actions.", Toast.LENGTH_SHORT).show()
             }
-        }, LinearLayout.LayoutParams(-1, dp(42)).apply { topMargin = dp(8) })
-        root.addView(commandButton("Done · close keyboard") { requestHideSelf(0) },
-            LinearLayout.LayoutParams(-1, dp(42)).apply { topMargin = dp(6) })
-    }
+        }, LinearLayout.LayoutParams(dp(55), dp(34)))
+        root.addView(toolbar, LinearLayout.LayoutParams(-1, dp(36)))
 
-    private fun actionsContainer(root: LinearLayout): LinearLayout {
-        val scroll = (0 until root.childCount)
-            .map { root.getChildAt(it) }
-            .filterIsInstance<ScrollView>()
-            .firstOrNull()
-        return (scroll?.getChildAt(0) as? LinearLayout)
-            ?: LinearLayout(this).also { it.orientation = LinearLayout.VERTICAL }
-    }
-
-    private fun renderActions(list: LinearLayout) {
-        list.removeAllViews()
-        if (isSensitiveField()) {
-            list.addView(TextView(this).apply {
-                text = "Mohxify commands are disabled in password fields."
-                textSize = 13f
-                setTextColor(Color.rgb(180, 174, 198))
-                setPadding(dp(2), dp(8), dp(2), dp(12))
+        val actions = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        val gifActions = if (isSensitiveField()) emptyList() else GifActionStore.all(this)
+        if (gifActions.isEmpty()) {
+            actions.addView(TextView(this).apply {
+                text = if (isSensitiveField()) "Commands disabled in password fields" else "Saved GIF triggers appear here"
+                textSize = 10f
+                setTextColor(Color.rgb(155, 148, 176))
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(dp(5), 0, 0, 0)
             })
-            return
-        }
-        val activeLoadout = LoadoutStore.active(this)
-        val allGifActions = GifActionStore.all(this)
-        val textRules = if (commandFilter == CommandFilter.GIFS) emptyList() else activeLoadout.rules
-        val gifActions = if (commandFilter == CommandFilter.TEXT) emptyList() else allGifActions
-
-        if (textRules.isEmpty() && gifActions.isEmpty()) {
-            list.addView(TextView(this).apply {
-                text = if (activeLoadout.rules.isEmpty() && allGifActions.isEmpty()) {
-                    "No commands saved yet. Add text rules in your active loadout or GIF actions in the Mohxify GIF screen."
-                } else {
-                    "No commands in this section yet."
-                }
-                textSize = 13f
-                setTextColor(Color.rgb(180, 174, 198))
-                setPadding(dp(2), dp(8), dp(2), dp(12))
-            })
-            return
-        }
-
-        if (textRules.isNotEmpty()) {
-            addSectionHeader(list, "TEXT COMMANDS", "${activeLoadout.name} · ${textRules.size}")
-            textRules.forEach { rule ->
-                val card = LinearLayout(this).apply {
-                    orientation = LinearLayout.VERTICAL
-                    setPadding(dp(12), dp(10), dp(12), dp(10))
-                    background = rounded(Color.rgb(23, 21, 34), 15)
-                }
-                card.addView(TextView(this).apply {
-                    text = rule.from
-                    textSize = 15f
-                    typeface = Typeface.DEFAULT_BOLD
-                    setTextColor(Color.WHITE)
-                })
-                card.addView(TextView(this).apply {
-                    text = "Replaces with  →  ${rule.to}"
-                    textSize = 12f
-                    setTextColor(Color.rgb(190, 166, 255))
-                    setPadding(0, dp(3), 0, dp(8))
-                })
-                card.addView(commandButton("Insert replacement  →") {
-                    val connection = currentInputConnection
-                    if (connection == null) {
-                        Toast.makeText(this@MohxifyKeyboardService, "Open a text field first.", Toast.LENGTH_SHORT).show()
-                    } else {
-                        connection.commitText(rule.to, 1)
-                    }
-                }, LinearLayout.LayoutParams(-1, dp(40)))
-                list.addView(card, LinearLayout.LayoutParams(-1, -2).apply {
-                    bottomMargin = dp(8)
-                })
-            }
-        }
-
-        if (gifActions.isNotEmpty()) {
-            addSectionHeader(list, "GIF COMMANDS", "${gifActions.size} saved")
+        } else {
             gifActions.forEach { action ->
-                val card = LinearLayout(this).apply {
-                    orientation = LinearLayout.VERTICAL
-                    setPadding(dp(12), dp(10), dp(12), dp(10))
-                    background = rounded(Color.rgb(23, 21, 34), 15)
-                }
-                card.addView(TextView(this).apply {
-                    text = action.trigger
-                    textSize = 15f
-                    typeface = Typeface.DEFAULT_BOLD
-                    setTextColor(Color.WHITE)
-                })
-                card.addView(TextView(this).apply {
-                    text = "Saved GIF action"
-                    textSize = 11f
-                    setTextColor(Color.rgb(170, 164, 188))
-                    setPadding(0, dp(3), 0, dp(8))
-                })
-                card.addView(commandButton("Run GIF command  →") { runCommand(action) },
-                    LinearLayout.LayoutParams(-1, dp(40)))
-                list.addView(card, LinearLayout.LayoutParams(-1, -2).apply {
-                    bottomMargin = dp(8)
-                })
+                actions.addView(key(action.trigger, accent = false) { insertGif(action.uri) },
+                    LinearLayout.LayoutParams(-2, dp(34)).apply {
+                        rightMargin = dp(5)
+                    })
             }
+        }
+        root.addView(HorizontalScrollView(this).apply {
+            isHorizontalScrollBarEnabled = false
+            addView(actions, android.widget.FrameLayout.LayoutParams(-2, -1))
+        }, LinearLayout.LayoutParams(-1, dp(39)).apply {
+            topMargin = dp(3)
+            bottomMargin = dp(3)
+        })
+
+        if (numbers) {
+            addKeyRow(root, listOf("1","2","3","4","5","6","7","8","9","0")) { insertKey(it) }
+            addKeyRow(root, listOf("@","#","$","%","&","-","+","(",")","/")) { insertKey(it) }
+            addKeyRow(root, listOf("=","*","\"","'",":",";","!","?")) { insertKey(it) }
+            addBottomRow(root, symbolMode = true)
+        } else {
+            addKeyRow(root, listOf("q","w","e","r","t","y","u","i","o","p")) { insertKey(if (caps) it.uppercase() else it) }
+            addKeyRow(root, listOf("a","s","d","f","g","h","j","k","l")) { insertKey(if (caps) it.uppercase() else it) }
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER
+            }
+            row.addView(key("⇧", accent = caps) { caps = !caps; render(root) },
+                LinearLayout.LayoutParams(0, dp(43), 1.25f).apply { rightMargin = dp(3) })
+            listOf("z","x","c","v","b","n","m").forEach { letter ->
+                row.addView(key(if (caps) letter.uppercase() else letter) { insertKey(if (caps) letter.uppercase() else letter) },
+                    LinearLayout.LayoutParams(0, dp(43), 1f).apply { rightMargin = dp(3) })
+            }
+            row.addView(key("⌫", accent = true) { deleteBeforeCursor() },
+                LinearLayout.LayoutParams(0, dp(43), 1.35f))
+            root.addView(row, LinearLayout.LayoutParams(-1, dp(47)).apply { bottomMargin = dp(3) })
+            addBottomRow(root, symbolMode = false)
+        }
+    }
+
+    private fun addKeyRow(root: LinearLayout, labels: List<String>, onTap: (String) -> Unit) {
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+        }
+        labels.forEachIndexed { index, label ->
+            row.addView(key(label) { onTap(label) },
+                LinearLayout.LayoutParams(0, dp(43), 1f).apply {
+                    if (index < labels.lastIndex) rightMargin = dp(3)
+                })
+        }
+        root.addView(row, LinearLayout.LayoutParams(-1, dp(47)).apply { bottomMargin = dp(3) })
+    }
+
+    private fun addBottomRow(root: LinearLayout, symbolMode: Boolean) {
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+        }
+        row.addView(key(if (symbolMode) "ABC" else "?123", accent = true) {
+            numbers = !numbers
+            render(root)
+        }, LinearLayout.LayoutParams(dp(58), dp(43)).apply { rightMargin = dp(3) })
+        row.addView(key(",", accent = false) { insertKey(",") },
+            LinearLayout.LayoutParams(dp(38), dp(43)).apply { rightMargin = dp(3) })
+        row.addView(key("English (US)", accent = false) { insertKey(" ") },
+            LinearLayout.LayoutParams(0, dp(43), 1f).apply { rightMargin = dp(3) })
+        row.addView(key(".", accent = false) { insertKey(".") },
+            LinearLayout.LayoutParams(dp(38), dp(43)).apply { rightMargin = dp(3) })
+        row.addView(key("↵", accent = true) { performEnter() },
+            LinearLayout.LayoutParams(dp(55), dp(43)))
+        root.addView(row, LinearLayout.LayoutParams(-1, dp(47)))
+    }
+
+    private fun insertKey(value: String) {
+        if (isSensitiveField() && value.length > 1) return
+        currentInputConnection?.commitText(value, 1)
+    }
+
+    private fun deleteBeforeCursor() {
+        val connection = currentInputConnection ?: return
+        if (!connection.deleteSurroundingText(1, 0)) {
+            connection.sendKeyEvent(android.view.KeyEvent(android.view.KeyEvent.ACTION_DOWN, android.view.KeyEvent.KEYCODE_DEL))
+            connection.sendKeyEvent(android.view.KeyEvent(android.view.KeyEvent.ACTION_UP, android.view.KeyEvent.KEYCODE_DEL))
+        }
+    }
+
+    private fun performEnter() {
+        val connection = currentInputConnection ?: return
+        val action = currentInputEditorInfo?.imeOptions?.and(EditorInfo.IME_MASK_ACTION) ?: EditorInfo.IME_ACTION_NONE
+        if (action != EditorInfo.IME_ACTION_NONE && action != EditorInfo.IME_ACTION_UNSPECIFIED) {
+            connection.performEditorAction(action)
+        } else {
+            connection.commitText("\n", 1)
+        }
+    }
+
+    private fun insertGif(rawUri: String) {
+        if (isSensitiveField()) return
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+            Toast.makeText(this, "Direct GIF insertion needs Android 7 or newer.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val connection = currentInputConnection
+        val uri = Uri.parse(rawUri)
+        if (connection == null || uri.scheme != "content") {
+            Toast.makeText(this, "This GIF can't be inserted directly. Re-import it in Mohxify.", Toast.LENGTH_LONG).show()
+            return
+        }
+        try {
+            val description = ClipDescription("Mohxify GIF", arrayOf("image/gif"))
+            val content = InputContentInfo(uri, description, null)
+            val accepted = connection.commitContent(
+                content,
+                InputConnection.INPUT_CONTENT_GRANT_READ_URI_PERMISSION,
+                Bundle()
+            )
+            if (!accepted) {
+                Toast.makeText(this, "This app doesn't support direct GIF insertion. Try a chat app that accepts GIF keyboard content.", Toast.LENGTH_LONG).show()
+            }
+        } catch (_: Exception) {
+            Toast.makeText(this, "Couldn't insert this GIF. Re-import it in Mohxify and try again.", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -220,59 +220,15 @@ class MohxifyKeyboardService : InputMethodService() {
             variation == InputType.TYPE_NUMBER_VARIATION_PASSWORD
     }
 
-    private fun addSectionHeader(list: LinearLayout, title: String, detail: String) {
-        list.addView(LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            addView(TextView(this@MohxifyKeyboardService).apply {
-                text = title
-                textSize = 10f
-                typeface = Typeface.DEFAULT_BOLD
-                setTextColor(Color.rgb(190, 166, 255))
-            }, LinearLayout.LayoutParams(0, dp(28), 1f))
-            addView(TextView(this@MohxifyKeyboardService).apply {
-                text = detail
-                textSize = 10f
-                setTextColor(Color.rgb(160, 153, 178))
-            })
-        }, LinearLayout.LayoutParams(-1, dp(30)))
-    }
-
-    private fun runCommand(action: GifAction) {
-        val uri = Uri.parse(action.uri)
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "image/gif"
-            putExtra(Intent.EXTRA_STREAM, uri)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        try {
-            if (packageManager.getLaunchIntentForPackage("com.whatsapp") != null) {
-                // This command is designed around the existing WhatsApp GIF workflow.
-                intent.setPackage("com.whatsapp")
-                startActivity(intent)
-            } else {
-                startActivity(Intent.createChooser(intent, "Run Mohxify GIF command")
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            }
-        } catch (_: Exception) {
-            try {
-                intent.setPackage(null)
-                startActivity(Intent.createChooser(intent, "Choose an app for this GIF")
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            } catch (_: Exception) {
-                Toast.makeText(this, "Couldn't run this command. Re-save the GIF in Mohxify and try again.", Toast.LENGTH_LONG).show()
-            }
-        }
-    }
-
-    private fun commandButton(label: String, action: () -> Unit) = TextView(this).apply {
+    private fun key(label: String, accent: Boolean = false, action: () -> Unit) = TextView(this).apply {
         text = label
-        textSize = 13f
-        typeface = Typeface.DEFAULT_BOLD
+        textSize = if (label.length > 7) 10f else 16f
+        typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
         gravity = Gravity.CENTER
         setTextColor(Color.WHITE)
-        background = rounded(Color.rgb(91, 58, 168), 12)
-        setPadding(dp(10), dp(7), dp(10), dp(7))
+        background = rounded(if (accent) Color.rgb(91, 58, 168) else Color.rgb(39, 37, 51), 7)
+        setPadding(dp(3), dp(4), dp(3), dp(4))
+        isSingleLine = true
         setOnClickListener { action() }
     }
 
