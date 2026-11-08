@@ -16,7 +16,8 @@ Mohxify is a local-first Android text replacement tool that works alongside your
 - Copy or download the current loadout as a text file.
 - Export every loadout and the active selection to a JSON backup, then restore from a validated backup with an explicit replace confirmation.
 - Global ON/OFF switch and Quick Settings tile.
-- No INTERNET permission. Check for updates opens the public GitHub Releases page.
+- Checks the public GitHub Releases feed for newer versions and offers in-app APK download and installation through Android’s system installer.
+- Downloads are checked against the SHA-256 digest published with the GitHub release before installation.
 
 
 ## Build
@@ -39,7 +40,7 @@ Accessibility is powerful. Mohxify uses it only to detect completed words in edi
 ## Privacy and compatibility
 
 - Text processing and rule storage happen on-device.
-- Mohxify does not request the INTERNET permission.
+- Mohxify uses internet access only to check public GitHub release metadata and download release APKs when you request an update. Typed text and dictionaries remain on-device and are not transmitted.
 - Password fields are skipped.
 - The app supports Android 8.0 (API 26) and targets API 35. Accessibility behavior can vary between apps and Android versions, so test on the devices and text fields you use.
 - Accessibility-based text editing is not universal; custom editors may behave differently.
