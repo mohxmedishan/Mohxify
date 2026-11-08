@@ -38,7 +38,7 @@ class KeyboardSetupActivity : Activity() {
             setPadding(0, dp(8), 0, dp(8))
         })
         root.addView(TextView(this).apply {
-            text = "Enable Mohxify Keyboard in Android settings, then choose it from the keyboard switcher inside a text field. Use it to run saved Mohxify trigger actions."
+            text = "Enable Mohxify Keyboard in Android settings, then choose it from the keyboard switcher inside a text field. Use it to insert replacements from your active loadout or run saved GIF trigger actions."
             textSize = 14f
             setTextColor(Color.rgb(196, 190, 213))
             setLineSpacing(dp(3).toFloat(), 1f)
