@@ -5,6 +5,7 @@ import android.content.Intent
 import android.graphics.PixelFormat
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
+import android.provider.Settings
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
@@ -35,7 +36,13 @@ class MohxifyAccessibilityService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
         if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
-            updateActionBubble(event.packageName?.toString())
+            val packageName = event.packageName?.toString()
+            when {
+                packageName == "com.whatsapp" -> updateActionBubble(packageName)
+                packageName.isNullOrBlank() -> Unit
+                isCurrentInputMethod(packageName) -> Unit
+                else -> updateActionBubble(packageName)
+            }
             return
         }
         if (editing || event.eventType != AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED) return
@@ -145,6 +152,14 @@ class MohxifyAccessibilityService : AccessibilityService() {
         } finally {
             node.recycle()
         }
+    }
+
+    private fun isCurrentInputMethod(packageName: String): Boolean {
+        val currentInputMethod = Settings.Secure.getString(
+            contentResolver,
+            Settings.Secure.DEFAULT_INPUT_METHOD
+        ) ?: return false
+        return currentInputMethod.substringBefore('/') == packageName
     }
 
     private fun updateActionBubble(packageName: String?) {
