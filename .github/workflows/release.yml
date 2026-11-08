@@ -18,6 +18,10 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+      - name: Set up compatible Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
       - name: Verify signing secrets and restore private keystore
         env:
           MOHXIFY_KEYSTORE_BASE64: ${{ secrets.MOHXIFY_KEYSTORE_BASE64 }}
