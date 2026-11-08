@@ -55,7 +55,7 @@ class KeyboardSetupActivity : Activity() {
             }
         }, LinearLayout.LayoutParams(-1, dp(50)).apply { topMargin = dp(10) })
         root.addView(TextView(this).apply {
-            text = "This first version covers core typing. GIF, emoji and clipboard panels will be added in later stages."
+            text = "Core typing, emoji selection, a saved clipboard panel, and GIF-trigger search are included. GIF insertion depends on whether the app you're typing in accepts GIF content."
             textSize = 12f
             setTextColor(Color.rgb(170, 164, 188))
             setPadding(0, dp(18), 0, 0)
