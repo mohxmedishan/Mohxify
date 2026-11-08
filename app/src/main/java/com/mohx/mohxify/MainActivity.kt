@@ -71,7 +71,9 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()\n\n    private fun currentVersion(): String = packageManager.getPackageInfo(packageName, 0).versionName ?: "unknown"
+    private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
+
+    private fun currentVersion(): String = packageManager.getPackageInfo(packageName, 0).versionName ?: "unknown"
 
     private fun render() {
         val page = LinearLayout(this).apply {
