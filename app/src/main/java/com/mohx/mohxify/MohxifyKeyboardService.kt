@@ -67,9 +67,9 @@ class MohxifyKeyboardService : InputMethodService() {
         val match = Regex("(^|\\s)(,[A-Za-z0-9_-]+)\\s$").find(before) ?: return
         val typedShortcut = match.groupValues[2]
         val shortcutWithSeparator = typedShortcut + " "
-        val normalized = typedShortcut.drop(1).replace("_", "").replace("-", "")
+        val normalized = typedShortcut.drop(1).replace(Regex("[^A-Za-z0-9]"), "")
         val action = GifActionStore.all(this).firstOrNull {
-            it.trigger.trim().replace(Regex("\\s+"), "").replace("_", "").replace("-", "")
+            it.trigger.trim().replace(Regex("[^A-Za-z0-9]"), "")
                 .equals(normalized, ignoreCase = true)
         } ?: return
 
