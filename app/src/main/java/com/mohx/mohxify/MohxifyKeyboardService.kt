@@ -157,8 +157,8 @@ class MohxifyKeyboardService : InputMethodService() {
 
         if (numbers) {
             addKeyRow(root, listOf("1","2","3","4","5","6","7","8","9","0")) { insertKey(it) }
-            addKeyRow(root, listOf("@","#","$","%","&","-","+","(",")","/")) { insertKey(it) }
-            addKeyRow(root, listOf("=","*","\\"","'",":",";","!","?")) { insertKey(it) }
+            addKeyRow(root, listOf("@","#","\$","%","&","-","+","(",")","/")) { insertKey(it) }
+            addKeyRow(root, listOf("=","*","'",":",";","!","?","~")) { insertKey(it) }
             addBottomRow(root, symbolMode = true)
         } else {
             addKeyRow(root, listOf("q","w","e","r","t","y","u","i","o","p")) { insertLetter(it) }
