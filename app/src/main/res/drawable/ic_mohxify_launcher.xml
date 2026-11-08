@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp"
-    android:viewportWidth="108" android:viewportHeight="108">
-    <path android:fillColor="#090A12" android:pathData="M0,0h108v108h-108z"/>
-    <path android:fillColor="#171326" android:strokeColor="#3A2A60" android:strokeWidth="1.5"
-        android:pathData="M18,3h72a15,15 0,0 1,15 15v72a15,15 0,0 1,-15 15h-72a15,15 0,0 1,-15 -15v-72a15,15 0,0 1,15 -15z"/>
-    <path android:fillColor="#8B5CF6" android:pathData="M54,12a42,42 0,1 0,0 84a42,42 0,1 0,0 -84"/>
-    <path android:fillColor="#FFFFFF" android:pathData="M26,71L33,36Q34,31 39,34L54,54L69,34Q74,31 75,36L82,71Q83,76 78,77L71,79L65,49L54,64L43,49L37,79L30,77Q25,76 26,71z"/>
-    <path android:fillColor="#D8C7FF" android:pathData="M82,23l2.8,7.2L92,33l-7.2,2.8L82,43l-2.8,-7.2L72,33l7.2,-2.8z"/>
+    android:viewportWidth="512" android:viewportHeight="512">
+    <path android:fillColor="#090A12" android:pathData="M148,16h216a132,132 0,0 1,132 132v216a132,132 0,0 1,-132 132h-216a132,132 0,0 1,-132 -132v-216a132,132 0,0 1,132 -132z" />
+    <path android:fillColor="#49356F" android:pathData="M148,16h216a132,132 0,0 1,132 132v216a132,132 0,0 1,-132 132h-216a132,132 0,0 1,-132 -132v-216a132,132 0,0 1,132 -132z" android:fillAlpha="0.18" />
+    <path android:fillColor="#8B5CF6" android:fillAlpha="0.09" android:pathData="M426,256a170,170 0,1 1,-340 0a170,170 0,1 1,340 0" />
+    <path android:fillColor="#00000000" android:strokeColor="#8B5CF6" android:strokeWidth="22" android:strokeLineCap="round" android:pathData="M105,295C151,142 350,82 411,159C464,226 371,336 230,365C176,376 123,367 91,345" />
+    <path android:fillColor="#FFFFFF" android:pathData="M132,354L173,151Q178,127 201,139L256,222L311,139Q334,127 339,151L380,354Q384,374 363,380L324,390L289,245L256,296L223,245L188,390L149,380Q128,374 132,354Z" />
+    <path android:fillColor="#D9C8FF" android:pathData="M390,111a11,11 0,1 1,0 22a11,11 0,1 1,0 -22" />
 </vector>
