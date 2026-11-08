@@ -3,6 +3,11 @@ package com.mohx.mohxify
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
+import android.content.ClipDescription
+import android.net.Uri
+import android.os.Build
+import android.os.Bundle
 import android.inputmethodservice.InputMethodService
 import android.graphics.Color
 import android.graphics.Typeface
@@ -11,9 +16,12 @@ import android.view.Gravity
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
+import android.view.inputmethod.InputContentInfo
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.EditText
+import android.widget.Toast
 import org.json.JSONArray
 
 /**
@@ -93,15 +101,95 @@ class MohxifyKeyboardService : InputMethodService() {
                 addRow(root, listOf("ABC"))
             }
             Panel.CLIPBOARD -> renderClipboardPanel(root)
-            Panel.GIFS -> {
-                root.addView(TextView(this).apply {
-                    text = "Your saved GIF triggers stay in Mohxify Actions. GIF suggestions and direct insertion are the next integration step."
-                    textSize = 13f
-                    setTextColor(Color.rgb(220, 214, 235))
-                    setPadding(dp(12), dp(12), dp(12), dp(12))
+            Panel.GIFS -> renderGifPanel(root)
+        }
+    }
+
+    private fun renderGifPanel(root: LinearLayout) {
+        root.addView(TextView(this).apply {
+            text = "Find a saved GIF by its trigger phrase"
+            textSize = 13f
+            setTextColor(Color.rgb(220, 214, 235))
+            setPadding(dp(10), dp(8), dp(10), dp(6))
+        })
+        val search = EditText(this).apply {
+            hint = "Try: good morning"
+            setSingleLine(true)
+            textSize = 14f
+            setTextColor(Color.WHITE)
+            setHintTextColor(Color.rgb(160, 153, 178))
+            setPadding(dp(12), dp(8), dp(12), dp(8))
+            setBackground(keyBackground("GIF"))
+        }
+        root.addView(search, LinearLayout.LayoutParams(-1, dp(44)).apply {
+            setMargins(dp(6), dp(2), dp(6), dp(8))
+        })
+        val results = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        root.addView(results, LinearLayout.LayoutParams(-1, 0, 1f))
+        fun refreshResults(query: String) {
+            results.removeAllViews()
+            val actions = GifActionStore.all(this@MohxifyKeyboardService)
+                .filter { query.isBlank() || it.trigger.contains(query.trim(), ignoreCase = true) }
+                .take(8)
+            if (actions.isEmpty()) {
+                results.addView(TextView(this).apply {
+                    text = if (GifActionStore.all(this@MohxifyKeyboardService).isEmpty())
+                        "No saved GIFs yet. Open Mohxify Actions to add one."
+                    else "No matching GIF triggers."
+                    textSize = 12f
+                    setTextColor(Color.rgb(190, 183, 208))
+                    setPadding(dp(12), dp(8), dp(12), dp(8))
                 })
-                addRow(root, listOf("ABC"))
             }
+            actions.forEach { action ->
+                results.addView(toolButton("GIF  ·  ${action.trigger}") {
+                    insertOrShareGif(action)
+                }, LinearLayout.LayoutParams(-1, dp(42)).apply {
+                    setMargins(dp(5), dp(2), dp(5), dp(3))
+                })
+            }
+        }
+        search.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = refreshResults(s?.toString().orEmpty())
+            override fun afterTextChanged(s: android.text.Editable?) = Unit
+        })
+        refreshResults("")
+        addRow(root, listOf("ABC"))
+    }
+
+    private fun insertOrShareGif(action: GifAction) {
+        val uri = Uri.parse(action.uri)
+        val connection = currentInputConnection
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1 &&
+            connection != null && currentInputEditorInfo != null) {
+            try {
+                val description = ClipDescription(action.trigger, arrayOf("image/gif"))
+                val content = InputContentInfo(uri, description, null)
+                val accepted = connection.commitContent(
+                    content,
+                    InputConnection.INPUT_CONTENT_GRANT_READ_URI_PERMISSION,
+                    Bundle()
+                )
+                if (accepted) {
+                    panel = Panel.KEYS
+                    keyboardRoot?.let { refreshKeyboard(it) }
+                    return
+                }
+            } catch (_: Exception) { }
+        }
+        // Editors that do not accept rich content can still receive the GIF via Android's share sheet.
+        try {
+            val send = Intent(Intent.ACTION_SEND).apply {
+                type = "image/gif"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                putExtra(Intent.EXTRA_SUBJECT, action.trigger)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(Intent.createChooser(send, "Share GIF").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            Toast.makeText(this, "This app doesn't accept GIF insertion directly; choose the chat in the share sheet.", Toast.LENGTH_LONG).show()
+        } catch (_: Exception) {
+            Toast.makeText(this, "Couldn't open this GIF. Try re-importing it in Mohxify Actions.", Toast.LENGTH_LONG).show()
         }
     }
 
