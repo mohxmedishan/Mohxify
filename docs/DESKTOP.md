@@ -23,7 +23,8 @@ The app icon is generated from the checked-in source asset automatically before 
 - Local text transformation with case preservation and word-boundary matching.
 - Multiple named loadouts with create, rename, activate, and delete actions.
 - Rule creation, editing, deletion, search, and .txt import/export.
-- JSON backup and restore with structural validation and replacement confirmation.
+- Android-compatible JSON backup and restore with structural validation and replacement confirmation.
+- Synonym alternatives and a next-synonym control.
 - Clipboard paste and copy from the editor.
 - Dark and light appearance modes.
 - Rules and loadouts stored locally on the device; no account or cloud service is required.
@@ -32,4 +33,4 @@ The app icon is generated from the checked-in source asset automatically before 
 
 Android's Accessibility Service is platform-specific and is not reused by this desktop target. This first desktop implementation provides an in-app transformation workspace. System-wide replacement in arbitrary Windows/macOS applications requires separate native integrations and explicit OS permissions; it is not silently enabled. The Android app, its accessibility behavior, and its release pipeline are untouched.
 
-The starter dictionary is illustrative. Import .txt loadouts or restore a Mohxify JSON backup to bring your own rules onto desktop.
+A new installation starts with an empty Loadout 1, matching Android. Import existing .txt dictionaries or restore an Android Mohxify JSON backup to bring your rules onto desktop.
