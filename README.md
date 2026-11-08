@@ -11,11 +11,13 @@ Mohxify is a local-first Android text replacement tool that works alongside your
 - Named rule loadouts, one active at a time.
 - Synonym alternatives can be cycled using Backspace after a replacement.
 - Import rules from pasted text or a `.txt` file, preview changes, and merge or replace.
+- Search originals and replacement values in large loadouts.
+- Duplicate, rename, create, and delete loadouts.
 - Copy or download the current loadout as a text file.
+- Export every loadout and the active selection to a JSON backup, then restore from a validated backup with an explicit replace confirmation.
 - Global ON/OFF switch and Quick Settings tile.
 - No INTERNET permission. Check for updates opens the public GitHub Releases page.
 
-The storage layer also contains JSON backup serialization helpers; a complete user-facing backup/restore flow is planned rather than advertised as an existing screen.
 
 ## Build
 
@@ -57,7 +59,7 @@ A private release signing configuration and a manual release workflow are prepar
 3. Run **Build signed Mohxify release** from Actions.
 4. Verify the APK installs and works on your test device before announcing it.
 
-**Important update warning:** an APK signed with the new private key cannot update an installed APK signed with the old public legacy key. Users will need to export their dictionaries, uninstall the old app once, install the newly signed APK, and restore their dictionaries. Do not delete the legacy key or publish the rotated APK until you have personally tested this migration and are ready to announce it.
+**Important update warning:** an APK signed with the new private key cannot update an installed APK signed with the old public legacy key. Users will need to save each loadout as a text file or export the full JSON backup, uninstall the old app once, install the newly signed APK, and restore their dictionaries. Do not delete the legacy key or publish the rotated APK until you have personally tested this migration and are ready to announce it.
 
 Never share the new keystore or its passwords in chat, issues, commits, or screenshots.
 
