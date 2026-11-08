@@ -1,12 +1,15 @@
 name: Build Mohxify desktop apps
+
 on:
   push:
     branches: [feature/desktop-app]
   pull_request:
     branches: [main]
   workflow_dispatch:
+
 permissions:
-  contents: read
+  contents: write
+
 jobs:
   build:
     name: Build ${{ matrix.platform }}
@@ -22,12 +25,21 @@ jobs:
             runner: macos-latest
             target: aarch64-apple-darwin
             bundle: dmg
+          - platform: ChromeOS
+            runner: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            bundle: deb
     runs-on: ${{ matrix.runner }}
     defaults:
       run:
         working-directory: desktop
     steps:
       - uses: actions/checkout@v4
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential curl wget file libssl-dev libayatana-appindicator3-dev librsvg2-dev patchelf libwebkit2gtk-4.1-dev
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -47,3 +59,26 @@ jobs:
           path: desktop/src-tauri/target/${{ matrix.target }}/release/bundle/${{ matrix.bundle }}/*
           if-no-files-found: error
           retention-days: 30
+
+  publish-downloads:
+    name: Publish direct installer downloads
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download installer files
+        uses: actions/download-artifact@v4
+        with:
+          pattern: Mohxify-*
+          path: release-assets
+          merge-multiple: true
+      - name: Publish individual installers for the website
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: desktop-latest
+          name: Mohxify Desktop (latest)
+          target_commitish: feature/desktop-app
+          prerelease: true
+          files: release-assets/*
+          overwrite_files: true
+          fail_on_unmatched_files: true
