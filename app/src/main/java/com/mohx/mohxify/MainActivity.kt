@@ -26,7 +26,6 @@ class MainActivity : Activity() {
     private lateinit var status: TextView
     private lateinit var serviceStatus: TextView
     private lateinit var serviceButton: Button
-    private lateinit var keyboardSetupButton: View
     private lateinit var loadoutSpinner: Spinner
     private lateinit var list: LinearLayout
     private lateinit var renameButton: Button
@@ -176,32 +175,11 @@ class MainActivity : Activity() {
         }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46)).apply {
             topMargin = dp(8)
         })
-        keyboardSetupButton = button("Set up Mohxify Keyboard  →") {
-            startActivity(Intent(this@MainActivity, KeyboardSetupActivity::class.java))
-        }.apply {
-            background = rounded(0xFF6D4BC3.toInt(), 14)
-            setTextColor(0xFFFFFFFF.toInt())
-        }
-        hero.addView(keyboardSetupButton, LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, dp(46)).apply { topMargin = dp(8) })
         hero.addView(TextView(this).apply {
             text = "Works in supported editable fields. Password fields are skipped; some apps use custom editors."
             textSize = 11f; setTextColor(0xFFAAA0C0.toInt()); setPadding(dp(2), dp(12), dp(2), 0)
         })
         content.addView(hero)
-
-        val gifCard = panel()
-        addSectionHeading(gifCard, "GIF ACTIONS", "Save keyboard GIFs to reusable triggers")
-        gifCard.addView(TextView(this).apply {
-            text = "Import GIFs, assign trigger phrases, and manage saved actions for the Mohxify command pad."
-            textSize = 12f; setTextColor(0xFFAAA4BC.toInt())
-        }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-            bottomMargin = dp(12)
-        })
-        gifCard.addView(button("Open GIF Actions  →") {
-            startActivity(Intent(this@MainActivity, MohxifyActionsActivity::class.java))
-        }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(50)))
-        content.addView(gifCard)
 
         val loadoutCard = panel()
         addSectionHeading(loadoutCard, "YOUR WORKSPACES", "Switch your vocabulary")
@@ -510,10 +488,6 @@ class MainActivity : Activity() {
         serviceStatus.text = if (accessibilityEnabled) "SERVICE READY" else "SETUP NEEDED"
         serviceStatus.setTextColor(if (accessibilityEnabled) 0xFFC5F36B.toInt() else 0xFFFFC078.toInt())
         serviceButton.visibility = if (accessibilityEnabled) View.GONE else View.VISIBLE
-        if (::keyboardSetupButton.isInitialized) {
-            keyboardSetupButton.visibility = if (isMohxifyKeyboardEnabled()) View.GONE else View.VISIBLE
-        }
-
         val adapter = object : ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, items.map { it.name }) {
             private fun style(view: View): View {
                 (view as? TextView)?.apply {
@@ -718,15 +692,6 @@ class MainActivity : Activity() {
             .setView(scroll)
             .setPositiveButton("Got it", null)
             .show()
-    }
-
-    private fun isMohxifyKeyboardEnabled(): Boolean {
-        val enabled = Settings.Secure.getString(
-            contentResolver, Settings.Secure.ENABLED_INPUT_METHODS
-        ) ?: return false
-        return enabled.split(':').any {
-            it.contains(packageName) && it.contains("MohxifyKeyboardService")
-        }
     }
 
     private fun isMohxifyAccessibilityEnabled(): Boolean {
