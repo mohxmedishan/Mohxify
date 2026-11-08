@@ -15,9 +15,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".MohxifyActionsActivity"
+            android:exported="false"
+            android:label="Mohxify Actions" />
         <service
             android:name=".MohxifyAccessibilityService"
-            android:label="Mohxify text replacement"
+            android:label="Mohxify text replacement and WhatsApp actions"
             android:icon="@drawable/ic_mohxify_launcher"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:exported="false">
