@@ -1,4 +1,4 @@
-name: Build Mohxify APK
+name: Build Mohxify debug APK (CI artifact)
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
@@ -48,10 +48,3 @@ jobs:
           path: app/build/outputs/apk/debug/mohxify-${{ env.APK_VERSION }}.apk
           if-no-files-found: error
           retention-days: 30
-      - name: Publish GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: build-${{ github.run_number }}
-          name: Mohxify ${{ env.APK_VERSION }}
-          files: app/build/outputs/apk/debug/mohxify-${{ env.APK_VERSION }}.apk
-          generate_release_notes: true
