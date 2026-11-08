@@ -471,7 +471,7 @@ class MainActivity : Activity() {
                     word.isBlank() -> "Your replacement preview will appear here."
                     word.any { it.isWhitespace() } -> "Enter one trigger word at a time."
                     matches.isEmpty() -> "No matching rule in this workspace."
-                    else -> "\$word  →  \$\{matches.first()}"
+                    else -> "$word  →  ${matches.first()}"
                 }
                 alternatives.text = if (matches.size > 1) "Other alternatives: ${matches.drop(1).joinToString("  ·  ")}" else ""
             }
