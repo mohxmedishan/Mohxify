@@ -1,0 +1,9 @@
+{
+  "$schema":"https://schema.tauri.app/config/2",
+  "productName":"Mohxify",
+  "version":"1.0.0",
+  "identifier":"com.mohx.mohxify.desktop",
+  "build":{"beforeDevCommand":"npm run dev","devUrl":"http://127.0.0.1:1420","beforeBuildCommand":"npm run build","frontendDist":"../dist"},
+  "app":{"windows":[{"title":"Mohxify","width":1180,"height":780,"minWidth":760,"minHeight":620,"center":true,"resizable":true}],"security":{"csp":"default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' asset: data:; connect-src ipc: http://ipc.localhost"}},
+  "bundle":{"active":true,"targets":["nsis","dmg"],"category":"Productivity","shortDescription":"Local-first text transformation","longDescription":"Transform text with custom dictionaries and loadouts, all stored locally."}
+}
