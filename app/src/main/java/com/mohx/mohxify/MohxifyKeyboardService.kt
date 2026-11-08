@@ -8,8 +8,11 @@ import android.content.ClipDescription
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.inputmethodservice.InputMethodService
 import android.graphics.Color
+import android.graphics.BitmapFactory
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
@@ -21,6 +24,8 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.EditText
+import android.widget.ImageView
+import android.widget.ScrollView
 import android.widget.Toast
 import org.json.JSONArray
 
@@ -34,6 +39,9 @@ class MohxifyKeyboardService : InputMethodService() {
     private var symbols = false
     private var panel = Panel.KEYS
     private var keyboardRoot: LinearLayout? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var gifSearchTask: Runnable? = null
+    private var gifSearchSequence = 0
 
     private enum class Panel { KEYS, EMOJI, CLIPBOARD, GIFS }
 
@@ -107,55 +115,158 @@ class MohxifyKeyboardService : InputMethodService() {
 
     private fun renderGifPanel(root: LinearLayout) {
         root.addView(TextView(this).apply {
-            text = "Find a saved GIF by its trigger phrase"
-            textSize = 13f
+            text = "GIFS  ·  Powered by GIPHY"
+            textSize = 12f
+            typeface = Typeface.DEFAULT_BOLD
             setTextColor(Color.rgb(220, 214, 235))
-            setPadding(dp(10), dp(8), dp(10), dp(6))
+            setPadding(dp(10), dp(4), dp(10), dp(5))
         })
         val search = EditText(this).apply {
-            hint = "Try: good morning"
+            hint = "Search GIFs"
             setSingleLine(true)
             textSize = 14f
             setTextColor(Color.WHITE)
             setHintTextColor(Color.rgb(160, 153, 178))
-            setPadding(dp(12), dp(8), dp(12), dp(8))
+            setPadding(dp(12), dp(6), dp(12), dp(6))
             setBackground(keyBackground("GIF"))
         }
-        root.addView(search, LinearLayout.LayoutParams(-1, dp(44)).apply {
-            setMargins(dp(6), dp(2), dp(6), dp(8))
+        root.addView(search, LinearLayout.LayoutParams(-1, dp(42)).apply {
+            setMargins(dp(5), dp(1), dp(5), dp(5))
         })
+        val status = TextView(this).apply {
+            text = if (GifSearchClient.apiKey(this@MohxifyKeyboardService).isBlank())
+                "Add your GIPHY API key in Mohxify Keyboard setup to load live GIFs."
+            else "Loading GIFs…"
+            textSize = 12f
+            setTextColor(Color.rgb(190, 183, 208))
+            setPadding(dp(10), dp(3), dp(10), dp(4))
+        }
+        root.addView(status, LinearLayout.LayoutParams(-1, dp(30)))
         val results = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        root.addView(results, LinearLayout.LayoutParams(-1, 0, 1f))
-        fun refreshResults(query: String) {
+        val scroll = ScrollView(this).apply {
+            isFillViewport = false
+            addView(results, ScrollView.LayoutParams(-1, -2))
+        }
+        root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
+
+        fun runSearch(query: String) {
+            val sequence = ++gifSearchSequence
+            status.text = if (query.isBlank()) "Loading trending reactions…" else "Searching…"
             results.removeAllViews()
-            val actions = GifActionStore.all(this@MohxifyKeyboardService)
-                .filter { query.isBlank() || it.trigger.contains(query.trim(), ignoreCase = true) }
-                .take(8)
-            if (actions.isEmpty()) {
-                results.addView(TextView(this).apply {
-                    text = if (GifActionStore.all(this@MohxifyKeyboardService).isEmpty())
-                        "No saved GIFs yet. Open Mohxify Actions to add one."
-                    else "No matching GIF triggers."
-                    textSize = 12f
-                    setTextColor(Color.rgb(190, 183, 208))
-                    setPadding(dp(12), dp(8), dp(12), dp(8))
-                })
-            }
-            actions.forEach { action ->
-                results.addView(toolButton("GIF  ·  ${action.trigger}") {
-                    insertOrShareGif(action)
-                }, LinearLayout.LayoutParams(-1, dp(42)).apply {
-                    setMargins(dp(5), dp(2), dp(5), dp(3))
-                })
+            GifSearchClient.search(this@MohxifyKeyboardService, query) { result ->
+                mainHandler.post {
+                    if (sequence != gifSearchSequence || panel != Panel.GIFS) return@post
+                    results.removeAllViews()
+                    result.fold(
+                        onSuccess = { gifs ->
+                            status.text = if (gifs.isEmpty()) "No GIFs found. Try another search." else "${gifs.size} GIFs · Powered by GIPHY"
+                            gifs.chunked(2).forEach { pair ->
+                                val row = LinearLayout(this@MohxifyKeyboardService).apply {
+                                    orientation = LinearLayout.HORIZONTAL
+                                }
+                                pair.forEach { gif ->
+                                    val preview = ImageView(this@MohxifyKeyboardService).apply {
+                                        scaleType = ImageView.ScaleType.CENTER_CROP
+                                        background = keyBackground("GIF")
+                                        contentDescription = gif.title
+                                        setPadding(dp(2), dp(2), dp(2), dp(2))
+                                        setOnClickListener {
+                                            isEnabled = false
+                                            status.text = "Preparing GIF…"
+                                            Thread {
+                                                try {
+                                                    val uri = GifSearchClient.download(this@MohxifyKeyboardService, gif)
+                                                    mainHandler.post {
+                                                        if (panel == Panel.GIFS) insertOrShareGif(uri, gif.title)
+                                                        isEnabled = true
+                                                    }
+                                                } catch (e: Exception) {
+                                                    mainHandler.post {
+                                                        status.text = e.message ?: "Couldn't load this GIF."
+                                                        isEnabled = true
+                                                    }
+                                                }
+                                            }.start()
+                                        }
+                                    }
+                                    row.addView(preview, LinearLayout.LayoutParams(0, dp(78), 1f).apply {
+                                        setMargins(dp(3), dp(3), dp(3), dp(3))
+                                    })
+                                    Thread {
+                                        try {
+                                            val connection = java.net.URL(gif.previewUrl).openConnection().apply {
+                                                connectTimeout = 8000
+                                                readTimeout = 8000
+                                            }
+                                            val bitmap = connection.getInputStream().use { BitmapFactory.decodeStream(it) }
+                                            if (bitmap != null) mainHandler.post {
+                                                if (preview.isAttachedToWindow) preview.setImageBitmap(bitmap)
+                                            }
+                                        } catch (_: Exception) { }
+                                    }.start()
+                                }
+                                if (pair.size == 1) {
+                                    row.addView(View(this@MohxifyKeyboardService), LinearLayout.LayoutParams(0, dp(78), 1f))
+                                }
+                                results.addView(row, LinearLayout.LayoutParams(-1, dp(84)))
+                            }
+                        },
+                        onFailure = { error ->
+                            status.text = error.message ?: "Couldn't load GIFs. Check your internet connection."
+                        }
+                    )
+                }
             }
         }
+
         search.addTextChangedListener(object : android.text.TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = refreshResults(s?.toString().orEmpty())
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                gifSearchTask?.let(mainHandler::removeCallbacks)
+                val query = s?.toString().orEmpty()
+                val task = Runnable { runSearch(query) }
+                gifSearchTask = task
+                mainHandler.postDelayed(task, 450)
+            }
             override fun afterTextChanged(s: android.text.Editable?) = Unit
         })
-        refreshResults("")
+        if (GifSearchClient.apiKey(this).isNotBlank()) runSearch("")
         addRow(root, listOf("ABC"))
+    }
+
+    private fun insertOrShareGif(action: GifAction) = insertOrShareGif(Uri.parse(action.uri), action.trigger)
+
+    private fun insertOrShareGif(uri: Uri, label: String) {
+        val connection = currentInputConnection
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1 &&
+            connection != null && currentInputEditorInfo != null) {
+            try {
+                val description = ClipDescription(label, arrayOf("image/gif"))
+                val content = InputContentInfo(uri, description, null)
+                val accepted = connection.commitContent(
+                    content,
+                    InputConnection.INPUT_CONTENT_GRANT_READ_URI_PERMISSION,
+                    Bundle()
+                )
+                if (accepted) {
+                    panel = Panel.KEYS
+                    keyboardRoot?.let { refreshKeyboard(it) }
+                    return
+                }
+            } catch (_: Exception) { }
+        }
+        try {
+            val send = Intent(Intent.ACTION_SEND).apply {
+                type = "image/gif"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                putExtra(Intent.EXTRA_SUBJECT, label)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(Intent.createChooser(send, "Share GIF").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            Toast.makeText(this, "Choose the chat to share this GIF.", Toast.LENGTH_LONG).show()
+        } catch (_: Exception) {
+            Toast.makeText(this, "Couldn't open this GIF. Check your connection and try again.", Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun insertOrShareGif(action: GifAction) {
