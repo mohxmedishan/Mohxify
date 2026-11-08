@@ -67,6 +67,9 @@ class MohxifyActionsActivity : Activity() {
         root.addView(search, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52)).apply {
             topMargin = dp(16); bottomMargin = dp(10)
         })
+        root.addView(button("Import GIF from Gboard") {
+            startActivity(Intent(this, GifImportActivity::class.java))
+        }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)).apply { bottomMargin = dp(8) })
         root.addView(button("+  Add GIF action") { showAddDialog() }, LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, dp(48)))
         root.addView(label("YOUR SAVED ACTIONS", 10f, 0xFFBDA8FF.toInt()).apply {
