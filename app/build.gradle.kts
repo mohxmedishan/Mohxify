@@ -10,7 +10,9 @@ android {
     signingConfigs {
         create("permanentDebug") {
             storeFile = file("mohxify-debug.keystore")
-            // Must match generate-keystore.yml exactly.
+            // Legacy signing is retained temporarily to preserve update compatibility.
+            // Replace this with a private release key stored in GitHub Actions secrets
+            // before distributing a security-hardened public release.
             storePassword = "mohxify-debug-password"
             keyAlias = "mohxify"
             keyPassword = "mohxify-debug-password"
@@ -25,6 +27,7 @@ android {
         val runNumber = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
         versionCode = runNumber
         versionName = "1.$runNumber"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -33,9 +36,17 @@ android {
         }
     }
 
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
+}
+
+dependencies {
+    testImplementation("junit:junit:4.13.2")
 }
