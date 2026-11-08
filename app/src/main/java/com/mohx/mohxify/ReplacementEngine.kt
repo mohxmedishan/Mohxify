@@ -4,6 +4,16 @@ import java.util.Locale
 
 /** Pure replacement logic, separated so it can be tested without Android APIs. */
 object ReplacementEngine {
+    /**
+     * True only when a text-change event has newly added a trailing word separator.
+     * Comparing before/current text rather than AccessibilityEvent added/removed counts
+     * is important because keyboards such as Gboard replace composing text on commit.
+     */
+    fun isCompletedWordSeparator(before: String?, current: String): Boolean {
+        if (before.isNullOrEmpty() || current.isEmpty()) return false
+        return current.last().isWhitespace() && !before.last().isWhitespace()
+    }
+
     /** Returns every synonym in the order configured in the loadout. */
     fun alternatives(word: String, rules: List<Rule>): List<String> {
         val matching = rules.filter { it.from.equals(word, ignoreCase = true) }
