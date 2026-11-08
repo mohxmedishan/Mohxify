@@ -85,25 +85,28 @@ class MohxifyAccessibilityService : AccessibilityService() {
                 return
             }
 
-            // Only genuine insertions can trigger a replacement. Rewrites, deletions and
-            // selection edits are deliberately ignored.
-            if (event.addedCount <= 0 || event.removedCount != 0) {
-                lastReplacement = null
-                suppressedReentry = null
-                return
-            }
+            // Handle the one-shot synonym-cycle guard before inspecting event counts.
+            // Gboard may report a committed word as a replacement of its composing text
+            // (addedCount > 0 AND removedCount > 0), not as a pure insertion.
             val suppression = suppressedReentry
             if (suppression != null) {
                 suppressedReentry = null
                 if (suppression.windowId == event.windowId &&
                     suppression.viewId == node.viewIdResourceName &&
-                    event.beforeText?.toString() == suppression.beforeText &&
+                    previous == suppression.beforeText &&
                     current == suppression.beforeText + " ") {
                     return
                 }
             }
+
+            // Trigger only when this event newly introduces a trailing separator.
+            // This accepts Gboard composing-text commits while rejecting ordinary edits,
+            // deletions, and later events when the field already ended in whitespace.
+            if (!ReplacementEngine.isCompletedWordSeparator(previous, current)) {
+                lastReplacement = null
+                return
+            }
             lastReplacement = null
-            if (current.isEmpty() || !current.last().isWhitespace()) return
 
             val separatorIndex = current.length - 1
             var tokenStart = separatorIndex
