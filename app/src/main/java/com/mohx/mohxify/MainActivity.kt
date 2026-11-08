@@ -240,6 +240,35 @@ class MainActivity : Activity() {
         })
     }
 
+    private fun button(label: String, action: () -> Unit) = Button(this).apply {
+        text = label
+        textSize = 14f
+        isAllCaps = false
+        setTextColor(0xFFF7F3FF.toInt())
+        background = rounded(0xFF7040D8.toInt(), 14)
+        minHeight = dp(48)
+        setOnClickListener { action() }
+    }
+
+    private fun compactButton(label: String, action: () -> Unit) = Button(this).apply {
+        text = label
+        textSize = if (label == "+") 23f else 21f
+        isAllCaps = false
+        minWidth = dp(42)
+        setTextColor(0xFFE8DDFF.toInt())
+        background = rounded(0xFF29263B.toInt(), 14)
+        setOnClickListener { action() }
+    }
+
+    private fun rounded(color: Int, radius: Int) = GradientDrawable().apply {
+        setColor(color)
+        cornerRadius = dp(radius).toFloat()
+    }
+
+    private fun iconParams() = LinearLayout.LayoutParams(dp(46), dp(50)).apply {
+        leftMargin = dp(5)
+    }
+
     private fun refresh() {
         if (!::status.isInitialized) return
         val items = LoadoutStore.all(this)
