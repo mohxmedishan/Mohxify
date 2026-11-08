@@ -67,7 +67,7 @@ class MohxifyKeyboardService : InputMethodService() {
         } else {
             addRow(root, listOf("1","2","3","4","5","6","7","8","9","0"))
             addRow(root, listOf("@","#","$","%","&","-","+","(",")","/"))
-            addRow(root, listOf("=、","*","\"","' ",":",";","!","?","⌫"))
+            addRow(root, listOf("=", "*", "`", "'", ":", ";", "!", "?", "⌫"))
             addRow(root, listOf("ABC",",","space",".","↵"))
         }
     }
