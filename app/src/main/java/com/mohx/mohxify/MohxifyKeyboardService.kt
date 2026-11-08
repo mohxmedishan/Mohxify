@@ -7,6 +7,7 @@ import android.graphics.drawable.GradientDrawable
 import android.inputmethodservice.InputMethodService
 import android.net.Uri
 import android.view.Gravity
+import android.text.InputType
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.ScrollView
