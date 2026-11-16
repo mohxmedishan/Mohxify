@@ -30,8 +30,11 @@ class ReplacementEngineTest {
     }
 
     @Test fun completedWordSeparatorTriggersWhenGboardCommitsComposingText() {
-        // Gboard can replace the composing text in the same event that adds the space.
         assertEquals(true, ReplacementEngine.isCompletedWordSeparator("wha", "what "))
+    }
+
+    @Test fun completedWordSeparatorTriggersForFirstWordInBlankField() {
+        assertEquals(true, ReplacementEngine.isCompletedWordSeparator("", "what "))
     }
 
     @Test fun completedWordSeparatorRejectsAnAlreadyPresentSeparator() {
@@ -42,7 +45,7 @@ class ReplacementEngineTest {
         assertEquals(false, ReplacementEngine.isCompletedWordSeparator("what", "whats"))
     }
 
-    @Test fun completedWordSeparatorRejectsMissingPreviousText() {
+    @Test fun completedWordSeparatorRejectsUnknownPreviousText() {
         assertEquals(false, ReplacementEngine.isCompletedWordSeparator(null, "what "))
     }
 
