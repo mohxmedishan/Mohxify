@@ -8,10 +8,14 @@ object ReplacementEngine {
      * True only when a text-change event has newly added a trailing word separator.
      * Comparing before/current text rather than AccessibilityEvent added/removed counts
      * is important because keyboards such as Gboard replace composing text on commit.
+     *
+     * An empty before-text is valid: it is the normal first-word case in a blank field.
+     * A null before-text is unknown and is rejected to avoid triggering on incomplete data.
      */
     fun isCompletedWordSeparator(before: String?, current: String): Boolean {
-        if (before.isNullOrEmpty() || current.isEmpty()) return false
-        return current.last().isWhitespace() && !before.last().isWhitespace()
+        if (before == null || current.isEmpty()) return false
+        return current.last().isWhitespace() &&
+            (before.isEmpty() || !before.last().isWhitespace())
     }
 
     /** Returns every synonym in the order configured in the loadout. */
